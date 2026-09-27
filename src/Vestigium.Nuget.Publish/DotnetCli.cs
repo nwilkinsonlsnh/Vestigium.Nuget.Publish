@@ -37,6 +37,43 @@ public static class DotnetCli
         return 0;
     }
 
+    public static int ListPacks(IEnumerable<string> repoPaths, string outputFolder, Action<string> log)
+    {
+        var found = 0;
+        foreach (var repo in repoPaths.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var output = Path.IsPathRooted(outputFolder)
+                ? outputFolder
+                : Path.Combine(repo, outputFolder);
+            if (!Directory.Exists(output))
+            {
+                log($"{Path.GetFileName(repo)}  no pack folder");
+                continue;
+            }
+
+            var files = Directory.EnumerateFiles(output, "*.nupkg")
+                .Concat(Directory.EnumerateFiles(output, "*.snupkg"))
+                .OrderBy(Path.GetFileName)
+                .ToArray();
+            if (files.Length == 0)
+            {
+                log($"{Path.GetFileName(repo)}  {output}  empty");
+                continue;
+            }
+
+            log($"{Path.GetFileName(repo)}  {output}");
+            foreach (var file in files)
+            {
+                var info = new FileInfo(file);
+                log($"  {info.Name}  {info.Length:N0} bytes  {info.LastWriteTime:g}");
+                found++;
+            }
+        }
+
+        log(found == 0 ? "no packed files" : $"{found} packed files");
+        return 0;
+    }
+
     public static async Task<int> PackAsync(PackableProject project, string outputFolder, Action<string> log, CancellationToken token)
     {
         var repo = project.RepoPath;

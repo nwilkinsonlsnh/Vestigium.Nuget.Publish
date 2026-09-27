@@ -170,6 +170,16 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ListPacks()
+    {
+        var repos = SelectedRepos.Count > 0
+            ? SelectedRepos.Select(r => r.Path)
+            : Repos.Select(r => r.Path);
+        DotnetCli.ListPacks(repos, OutputFolder, Append);
+        Status = "Listed packs";
+    }
+
+    [RelayCommand]
     private async Task ScanAsync()
     {
         await RefreshReposAsync();
