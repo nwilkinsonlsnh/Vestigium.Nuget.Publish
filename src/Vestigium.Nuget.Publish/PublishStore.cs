@@ -10,6 +10,8 @@ public sealed class PublishSettings
     public string Source { get; set; } = "https://api.nuget.org/v3/index.json";
 
     public string OutputFolder { get; set; } = "artifacts/nupkg";
+
+    public string Bump { get; set; } = "Patch";
 }
 
 public static class PublishStore

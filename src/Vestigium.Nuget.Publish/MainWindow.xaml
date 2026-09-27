@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Nuget Publish"
-        Height="780" Width="1280"
-        MinHeight="560" MinWidth="960"
+        Height="820" Width="1560"
+        MinHeight="640" MinWidth="1400"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Vestigium.Brushes.Surface.Window}">
   <Window.Resources>
@@ -133,7 +133,6 @@
           <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Clean packs" Style="{StaticResource Button.Secondary}" Command="{Binding CleanPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="16,4" Margin="0,0,12,0" />
-          <RadioButton Content="No bump" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpNone}" GroupName="Bump" />
           <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
           <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
           <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
@@ -176,7 +175,7 @@
             <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="180" />
             <DataGridTextColumn Header="Project" Binding="{Binding ProjectName}" Width="*" />
             <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="90" />
-            <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" />
+            <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="420" />
           </DataGrid.Columns>
         </DataGrid>
       </DockPanel>

@@ -18,6 +18,7 @@ public sealed partial class MainViewModel : ObservableObject
         Projects = [];
         Source = _settings.Source;
         OutputFolder = _settings.OutputFolder;
+        Bump = ParseBump(_settings.Bump);
         PublishStore.ClearApiKey();
         if (Roots.Count > 0)
             _ = RefreshReposAsync();
@@ -60,12 +61,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private VersionBump _bump = VersionBump.Patch;
 
-    public bool IsBumpNone
-    {
-        get => Bump == VersionBump.Keep;
-        set { if (value) Bump = VersionBump.Keep; }
-    }
-
     public bool IsBumpMajor
     {
         get => Bump == VersionBump.Major;
@@ -86,10 +81,16 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnBumpChanged(VersionBump value)
     {
-        OnPropertyChanged(nameof(IsBumpNone));
+        if (value == VersionBump.Keep)
+        {
+            Bump = VersionBump.Patch;
+            return;
+        }
+
         OnPropertyChanged(nameof(IsBumpMajor));
         OnPropertyChanged(nameof(IsBumpMinor));
         OnPropertyChanged(nameof(IsBumpPatch));
+        Persist();
     }
 
     partial void OnSourceChanged(string value) => Persist();
@@ -418,7 +419,18 @@ public sealed partial class MainViewModel : ObservableObject
         _settings.Roots = [.. Roots];
         _settings.Source = Source;
         _settings.OutputFolder = OutputFolder;
+        _settings.Bump = Bump.ToString();
         PublishStore.Save(_settings);
+    }
+
+    private static VersionBump ParseBump(string? raw)
+    {
+        return raw switch
+        {
+            nameof(VersionBump.Major) => VersionBump.Major,
+            nameof(VersionBump.Minor) => VersionBump.Minor,
+            _ => VersionBump.Patch
+        };
     }
 
     private void Append(string line)
