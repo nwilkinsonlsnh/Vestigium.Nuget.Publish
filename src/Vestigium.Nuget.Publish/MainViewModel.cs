@@ -60,6 +60,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private VersionBump _bump = VersionBump.Patch;
 
+    public bool IsBumpNone
+    {
+        get => Bump == VersionBump.Keep;
+        set { if (value) Bump = VersionBump.Keep; }
+    }
+
     public bool IsBumpMajor
     {
         get => Bump == VersionBump.Major;
@@ -80,6 +86,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnBumpChanged(VersionBump value)
     {
+        OnPropertyChanged(nameof(IsBumpNone));
         OnPropertyChanged(nameof(IsBumpMajor));
         OnPropertyChanged(nameof(IsBumpMinor));
         OnPropertyChanged(nameof(IsBumpPatch));
@@ -319,7 +326,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
-            if (pack)
+            if (pack && Bump != VersionBump.Keep)
             {
                 var next = VersionBumper.BumpProject(project.ProjectPath, Bump, out var previous);
                 if (next is null)
@@ -344,6 +351,10 @@ public sealed partial class MainViewModel : ObservableObject
 
                 project.Version = next;
                 SelectedProject = project;
+            }
+            else if (pack)
+            {
+                Append($"pack {project.ProjectName} {project.Version}  no bump");
             }
 
             if (pack)

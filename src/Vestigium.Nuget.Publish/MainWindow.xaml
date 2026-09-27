@@ -132,6 +132,7 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
           <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Clean packs" Style="{StaticResource Button.Secondary}" Command="{Binding CleanPacksCommand}" Padding="16,4" Margin="0,0,12,0" />
+          <RadioButton Content="No bump" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpNone}" GroupName="Bump" />
           <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
           <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
           <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
