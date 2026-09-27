@@ -9,6 +9,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Themes.Initialize(this);
+        ThemeCatalog.RegisterAll(Themes);
+        Themes.Initialize(this, "DarkMode");
     }
 }
