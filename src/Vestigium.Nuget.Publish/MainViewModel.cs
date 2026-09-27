@@ -19,6 +19,8 @@ public sealed partial class MainViewModel : ObservableObject
         Source = _settings.Source;
         OutputFolder = _settings.OutputFolder;
         PublishStore.ClearApiKey();
+        if (Roots.Count > 0)
+            _ = RefreshReposAsync();
     }
 
     public ObservableCollection<string> Roots { get; }
