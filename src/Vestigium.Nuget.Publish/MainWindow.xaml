@@ -53,44 +53,56 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <DockPanel>
-        <TextBlock DockPanel.Dock="Top" Text="Repo roots" Margin="0,0,0,8"
-                   Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-          <Button Content="Add folder" Style="{StaticResource Button.Secondary}" Click="AddRoot_Click" Padding="12,4" Margin="0,0,8,0" />
-          <Button Content="Remove" Style="{StaticResource Button.Secondary}" Command="{Binding RemoveRootCommand}" Padding="12,4" />
-        </StackPanel>
-        <ListBox ItemsSource="{Binding Roots}"
-                 SelectedItem="{Binding SelectedRoot}"
-                 DisplayMemberPath="."
-                 Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
-                 Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
-                 BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}">
-          <ListBox.ItemContainerStyle>
-            <Style TargetType="ListBoxItem">
-              <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
-              <Setter Property="Background" Value="Transparent" />
-              <Setter Property="Padding" Value="8,4" />
-              <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                  <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
-                </Trigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                  <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Surface.Card}" />
-                </Trigger>
-              </Style.Triggers>
-            </Style>
-          </ListBox.ItemContainerStyle>
-        </ListBox>
-      </DockPanel>
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="12" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="Repo roots" Margin="0,0,0,8"
+                     Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Add folder" Style="{StaticResource Button.Secondary}" Click="AddRoot_Click" Padding="12,4" Margin="0,0,8,0" />
+            <Button Content="Remove" Style="{StaticResource Button.Secondary}" Command="{Binding RemoveRootCommand}" Padding="12,4" />
+          </StackPanel>
+          <ListBox ItemsSource="{Binding Roots}"
+                   SelectedItem="{Binding SelectedRoot}"
+                   Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                   Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
+                   BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
+        </DockPanel>
+        <DockPanel Grid.Row="2">
+          <TextBlock DockPanel.Dock="Top" Text="Repositories" Margin="0,0,0,8"
+                     Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Synchronize" Style="{StaticResource Button.Secondary}" Command="{Binding SynchronizeCommand}" Padding="12,4" Margin="0,0,8,0" />
+            <Button Content="Copy" Style="{StaticResource Button.Secondary}" Command="{Binding CopyHeadCommand}" Padding="12,4" />
+          </StackPanel>
+          <ListBox ItemsSource="{Binding Repos}"
+                   SelectedItem="{Binding SelectedRepo, Mode=TwoWay}"
+                   Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                   Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
+                   BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Margin="4,2">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding Head}" FontFamily="Consolas" FontSize="12"
+                             Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </DockPanel>
+      </Grid>
 
       <DockPanel Grid.Column="2">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-          <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,12,0" />
-          <RadioButton Content="Keep" IsChecked="{Binding IsBumpKeep}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
-          <RadioButton Content="Patch" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
+          <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanAsyncCommand}" Padding="16,4" Margin="0,0,12,0" />
+          <RadioButton Content="Major" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
           <RadioButton Content="Minor" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
-          <RadioButton Content="Major" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" Margin="0,0,16,0" VerticalAlignment="Center" />
+          <RadioButton Content="Patch" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" Margin="0,0,16,0" VerticalAlignment="Center" />
           <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />

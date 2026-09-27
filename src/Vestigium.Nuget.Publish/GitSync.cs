@@ -6,6 +6,36 @@ namespace Vestigium.Nuget.Publish;
 
 public static class GitSync
 {
+    public static async Task<int> SyncAsync(string repoPath, Action<string> log, CancellationToken token)
+    {
+        if (!Directory.Exists(Path.Combine(repoPath, ".git")))
+        {
+            log($"not a git repo {repoPath}");
+            return 1;
+        }
+
+        log($"git fetch {Path.GetFileName(repoPath)}");
+        var fetch = await RunAsync("git", "fetch --prune", repoPath, log, token);
+        if (fetch != 0)
+            return fetch;
+
+        var pull = await RunAsync("git", "pull --ff-only", repoPath, log, token);
+        if (pull != 0)
+            return pull;
+
+        log($"synced {await DescribeAsync(repoPath, token)}");
+        return 0;
+    }
+
+    public static async Task<string> DescribeAsync(string repoPath, CancellationToken token)
+    {
+        var branch = (await ReadAsync("git", "rev-parse --abbrev-ref HEAD", repoPath, token)).Trim();
+        var sha = (await ReadAsync("git", "rev-parse --short HEAD", repoPath, token)).Trim();
+        if (string.IsNullOrWhiteSpace(sha))
+            return "—";
+        return string.IsNullOrWhiteSpace(branch) ? sha : $"{branch}  {sha}";
+    }
+
     public static async Task<int> EnsureCurrentAsync(string repoPath, Action<string> log, CancellationToken token)
     {
         if (!Directory.Exists(Path.Combine(repoPath, ".git")))

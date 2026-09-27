@@ -19,17 +19,11 @@ public sealed partial class MainViewModel : ObservableObject
         Source = _settings.Source;
         OutputFolder = _settings.OutputFolder;
         PublishStore.ClearApiKey();
-        if (Roots.Count == 0)
-        {
-            var clone = @"D:\Source\Clone";
-            if (Directory.Exists(clone))
-                Roots.Add(clone);
-        }
     }
 
     public ObservableCollection<string> Roots { get; }
 
-    public ObservableCollection<string> Repos { get; }
+    public ObservableCollection<RepoRow> Repos { get; }
 
     public ObservableCollection<PackableProject> Projects { get; }
 
@@ -37,6 +31,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _selectedRoot;
+
+    [ObservableProperty]
+    private RepoRow? _selectedRepo;
 
     [ObservableProperty]
     private PackableProject? _selectedProject;
@@ -59,16 +56,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private VersionBump _bump = VersionBump.Patch;
 
-    public bool IsBumpKeep
+    public bool IsBumpMajor
     {
-        get => Bump == VersionBump.Keep;
-        set { if (value) Bump = VersionBump.Keep; }
-    }
-
-    public bool IsBumpPatch
-    {
-        get => Bump == VersionBump.Patch;
-        set { if (value) Bump = VersionBump.Patch; }
+        get => Bump == VersionBump.Major;
+        set { if (value) Bump = VersionBump.Major; }
     }
 
     public bool IsBumpMinor
@@ -77,18 +68,17 @@ public sealed partial class MainViewModel : ObservableObject
         set { if (value) Bump = VersionBump.Minor; }
     }
 
-    public bool IsBumpMajor
+    public bool IsBumpPatch
     {
-        get => Bump == VersionBump.Major;
-        set { if (value) Bump = VersionBump.Major; }
+        get => Bump == VersionBump.Patch;
+        set { if (value) Bump = VersionBump.Patch; }
     }
 
     partial void OnBumpChanged(VersionBump value)
     {
-        OnPropertyChanged(nameof(IsBumpKeep));
-        OnPropertyChanged(nameof(IsBumpPatch));
-        OnPropertyChanged(nameof(IsBumpMinor));
         OnPropertyChanged(nameof(IsBumpMajor));
+        OnPropertyChanged(nameof(IsBumpMinor));
+        OnPropertyChanged(nameof(IsBumpPatch));
     }
 
     partial void OnSourceChanged(string value) => Persist();
@@ -97,7 +87,18 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedProjectChanged(PackableProject? value) => NotifyRun();
 
-    partial void OnBusyChanged(bool value) => NotifyRun();
+    partial void OnSelectedRepoChanged(RepoRow? value)
+    {
+        SynchronizeCommand.NotifyCanExecuteChanged();
+        CopyHeadCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnBusyChanged(bool value)
+    {
+        NotifyRun();
+        SynchronizeCommand.NotifyCanExecuteChanged();
+        CopyHeadCommand.NotifyCanExecuteChanged();
+    }
 
     public void AddRoot(string path)
     {
@@ -107,6 +108,7 @@ public sealed partial class MainViewModel : ObservableObject
         Roots.Add(path);
         Persist();
         Append($"root {path}");
+        _ = RefreshReposAsync();
     }
 
     public void ForgetKey() => ApiKey = null;
@@ -121,20 +123,68 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Scan()
+    private async Task ScanAsync()
     {
-        Repos.Clear();
         Projects.Clear();
         SelectedProject = null;
-        foreach (var repo in RepoScanner.ListRepos(Roots))
-            Repos.Add(repo);
-        foreach (var project in RepoScanner.ListProjects(Repos))
+        await RefreshReposAsync();
+        foreach (var project in RepoScanner.ListProjects(Repos.Select(r => r.Path)))
             Projects.Add(project);
         if (Projects.Count > 0)
             SelectedProject = Projects[0];
         Status = $"{Repos.Count} repos  {Projects.Count} packable";
         Append(Status);
         NotifyRun();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSync))]
+    private async Task SynchronizeAsync()
+    {
+        if (SelectedRepo is null)
+            return;
+        Busy = true;
+        try
+        {
+            var code = await GitSync.SyncAsync(SelectedRepo.Path, Append, Token());
+            SelectedRepo.Head = await GitSync.DescribeAsync(SelectedRepo.Path, CancellationToken.None);
+            Status = code == 0 ? $"Synced  {SelectedRepo.Head}" : "Sync failed";
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSync))]
+    private void CopyHead()
+    {
+        if (SelectedRepo is null || string.IsNullOrWhiteSpace(SelectedRepo.Head) || SelectedRepo.Head == "—")
+            return;
+        System.Windows.Clipboard.SetText(SelectedRepo.Head);
+        Append($"copied {SelectedRepo.Head}");
+    }
+
+    private bool CanSync() => !Busy && SelectedRepo is not null;
+
+    private async Task RefreshReposAsync()
+    {
+        Repos.Clear();
+        foreach (var path in RepoScanner.ListRepos(Roots))
+        {
+            var row = new RepoRow(path);
+            Repos.Add(row);
+            try
+            {
+                row.Head = await GitSync.DescribeAsync(path, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                row.Head = ex.Message;
+            }
+        }
+
+        SynchronizeCommand.NotifyCanExecuteChanged();
+        CopyHeadCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
@@ -191,7 +241,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
-            if (pack && Bump != VersionBump.Keep)
+            if (pack)
             {
                 var next = VersionBumper.BumpProject(project.ProjectPath, Bump, out var previous);
                 if (next is null)
