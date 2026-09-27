@@ -250,6 +250,13 @@ public sealed partial class MainViewModel : ObservableObject
         Status = "Log copied";
     }
 
+    [RelayCommand]
+    private void ClearLog()
+    {
+        Log = string.Empty;
+        Status = "Log cleared";
+    }
+
     private string Redact(string text)
     {
         if (string.IsNullOrWhiteSpace(text))

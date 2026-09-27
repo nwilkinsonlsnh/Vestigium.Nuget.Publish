@@ -145,9 +145,12 @@
             <TextBlock Text="Session log"
                        VerticalAlignment="Center"
                        Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
-            <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
-                    Content="Copy log" Style="{StaticResource Button.Secondary}"
-                    Command="{Binding CopyLogCommand}" Padding="12,4" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Content="Copy log" Style="{StaticResource Button.Secondary}"
+                      Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
+              <Button Content="Clear log" Style="{StaticResource Button.Secondary}"
+                      Command="{Binding ClearLogCommand}" Padding="12,4" />
+            </StackPanel>
           </DockPanel>
           <TextBox Height="180"
                    Style="{StaticResource TextBox.Standard}"
