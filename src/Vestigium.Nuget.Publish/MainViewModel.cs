@@ -241,7 +241,31 @@ public sealed partial class MainViewModel : ObservableObject
     private Task PackAndPushAsync() => RunAsync(push: true, pack: true);
 
     [RelayCommand]
-    private void Cancel()
+    private void CopyLog()
+    {
+        var text = Redact(Log);
+        if (string.IsNullOrWhiteSpace(text))
+            return;
+        System.Windows.Clipboard.SetText(text);
+        Status = "Log copied";
+    }
+
+    private string Redact(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var redacted = System.Text.RegularExpressions.Regex.Replace(
+            text,
+            @"--api-key\s+\S+",
+            "--api-key ****************",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        if (!string.IsNullOrWhiteSpace(ApiKey) && ApiKey.Length >= 8)
+            redacted = redacted.Replace(ApiKey, "****************", StringComparison.Ordinal);
+
+        return redacted;
+    }
     {
         try { _cts?.Cancel(); }
         catch (ObjectDisposedException) { }

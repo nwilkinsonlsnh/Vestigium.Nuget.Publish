@@ -140,15 +140,25 @@
           <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Cancel" Style="{StaticResource Button.Secondary}" Command="{Binding CancelCommand}" Padding="16,4" />
         </StackPanel>
-        <TextBox DockPanel.Dock="Bottom" Height="180" Margin="0,12,0,0"
-                 Style="{StaticResource TextBox.Standard}"
-                 Text="{Binding Log, Mode=OneWay}"
-                 IsReadOnly="True"
-                 FontFamily="Consolas"
-                 VerticalScrollBarVisibility="Auto"
-                 TextWrapping="Wrap"
-                 Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
-                 Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0" LastChildFill="True">
+          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <TextBlock Text="Session log"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
+            <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
+                    Content="Copy log" Style="{StaticResource Button.Secondary}"
+                    Command="{Binding CopyLogCommand}" Padding="12,4" />
+          </DockPanel>
+          <TextBox Height="180"
+                   Style="{StaticResource TextBox.Standard}"
+                   Text="{Binding Log, Mode=OneWay}"
+                   IsReadOnly="True"
+                   FontFamily="Consolas"
+                   VerticalScrollBarVisibility="Auto"
+                   TextWrapping="Wrap"
+                   Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                   Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+        </DockPanel>
         <DataGrid ItemsSource="{Binding Projects}"
                   SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
                   Style="{StaticResource DataGrid.Compact}"
