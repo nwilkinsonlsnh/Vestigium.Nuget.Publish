@@ -54,8 +54,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _busy;
 
-    [ObservableProperty]
-    private bool _hasKey;
+    public string KeyStatus => HasKey ? "Key saved on this machine" : "No key saved";
+
+    partial void OnHasKeyChanged(bool value) => OnPropertyChanged(nameof(KeyStatus));
 
     [ObservableProperty]
     private string _status = "Idle";

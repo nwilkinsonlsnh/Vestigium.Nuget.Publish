@@ -35,14 +35,22 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Label Content="API key" Style="{StaticResource Label.Standard}" VerticalAlignment="Center" />
-      <PasswordBox x:Name="KeyBox" Grid.Column="1" Margin="8,0,8,0" Height="28" />
+      <PasswordBox x:Name="KeyBox" Grid.Column="1" Margin="8,0,8,0" Height="28"
+                   Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                   Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
+                   CaretBrush="{DynamicResource Vestigium.Brushes.Text.Primary}"
+                   BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
       <Button Grid.Column="2" Content="Save key" Style="{StaticResource Button.Primary}" Click="SaveKey_Click" Padding="16,4" Margin="0,0,8,0" />
       <TextBlock Grid.Column="3" VerticalAlignment="Center"
-                 Text="{Binding HasKey, StringFormat=Saved on this machine: {0}}" />
+                 Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}"
+                 Text="{Binding KeyStatus}" />
       <Button Grid.Column="4" Content="Clear key" Style="{StaticResource Button.Secondary}" Command="{Binding ClearKeyCommand}" Padding="16,4" Margin="8,0,8,0" />
       <TextBox Grid.Column="5" Style="{StaticResource TextBox.Standard}" Width="280"
                Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"
-               ToolTip="NuGet source" />
+               ToolTip="NuGet source"
+               Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+               Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
+               CaretBrush="{DynamicResource Vestigium.Brushes.Text.Primary}" />
     </Grid>
 
     <Grid>
@@ -61,7 +69,26 @@
         </StackPanel>
         <ListBox ItemsSource="{Binding Roots}"
                  SelectedItem="{Binding SelectedRoot}"
-                 DisplayMemberPath="." />
+                 DisplayMemberPath="."
+                 Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                 Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
+                 BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}">
+          <ListBox.ItemContainerStyle>
+            <Style TargetType="ListBoxItem">
+              <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="Padding" Value="8,4" />
+              <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Surface.Card}" />
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </ListBox.ItemContainerStyle>
+        </ListBox>
       </DockPanel>
 
       <DockPanel Grid.Column="2">
