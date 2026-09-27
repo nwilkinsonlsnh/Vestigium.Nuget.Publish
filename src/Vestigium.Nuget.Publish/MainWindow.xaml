@@ -1,0 +1,102 @@
+<Window x:Class="Vestigium.Nuget.Publish.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nuget Publish"
+        Height="780" Width="1280"
+        MinHeight="560" MinWidth="960"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Vestigium.Brushes.Surface.Window}">
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Vestigium.Controls;component/Shell/MenuChrome.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Window.Resources>
+  <DockPanel Margin="16">
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <TextBlock DockPanel.Dock="Left"
+                 Style="{StaticResource TextBlock.Caption}"
+                 Text="Nuget Publish"
+                 VerticalAlignment="Center" />
+      <TextBlock HorizontalAlignment="Right"
+                 VerticalAlignment="Center"
+                 Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}"
+                 Text="{Binding Status}" />
+    </DockPanel>
+
+    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="220" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Label Content="API key" Style="{StaticResource Label.Standard}" VerticalAlignment="Center" />
+      <PasswordBox x:Name="KeyBox" Grid.Column="1" Margin="8,0,8,0" Height="28" />
+      <Button Grid.Column="2" Content="Save key" Style="{StaticResource Button.Primary}" Click="SaveKey_Click" Padding="16,4" Margin="0,0,8,0" />
+      <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                 Text="{Binding HasKey, StringFormat=Saved on this machine: {0}}" />
+      <Button Grid.Column="4" Content="Clear key" Style="{StaticResource Button.Secondary}" Command="{Binding ClearKeyCommand}" Padding="16,4" Margin="8,0,8,0" />
+      <TextBox Grid.Column="5" Style="{StaticResource TextBox.Standard}" Width="280"
+               Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"
+               ToolTip="NuGet source" />
+    </Grid>
+
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="12" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="Repo roots" Margin="0,0,0,8"
+                   Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+          <Button Content="Add folder" Style="{StaticResource Button.Secondary}" Click="AddRoot_Click" Padding="12,4" Margin="0,0,8,0" />
+          <Button Content="Remove" Style="{StaticResource Button.Secondary}" Command="{Binding RemoveRootCommand}" Padding="12,4" />
+        </StackPanel>
+        <ListBox ItemsSource="{Binding Roots}"
+                 SelectedItem="{Binding SelectedRoot}"
+                 DisplayMemberPath="." />
+      </DockPanel>
+
+      <DockPanel Grid.Column="2">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+          <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
+          <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
+          <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
+          <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
+          <Button Content="Cancel" Style="{StaticResource Button.Secondary}" Command="{Binding CancelCommand}" Padding="16,4" />
+        </StackPanel>
+        <TextBox DockPanel.Dock="Bottom" Height="180" Margin="0,12,0,0"
+                 Style="{StaticResource TextBox.Standard}"
+                 Text="{Binding Log, Mode=OneWay}"
+                 IsReadOnly="True"
+                 FontFamily="Consolas"
+                 VerticalScrollBarVisibility="Auto"
+                 TextWrapping="Wrap"
+                 Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                 Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+        <DataGrid ItemsSource="{Binding Projects}"
+                  SelectedItem="{Binding SelectedProject}"
+                  Style="{StaticResource DataGrid.Compact}"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  SelectionMode="Single"
+                  HeadersVisibility="Column">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="180" />
+            <DataGridTextColumn Header="Project" Binding="{Binding ProjectName}" Width="*" />
+            <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="90" />
+            <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" />
+          </DataGrid.Columns>
+        </DataGrid>
+      </DockPanel>
+    </Grid>
+  </DockPanel>
+</Window>

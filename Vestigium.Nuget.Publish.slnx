@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vestigium.Nuget.Publish/Vestigium.Nuget.Publish.csproj" />
+  </Folder>
+</Solution>
