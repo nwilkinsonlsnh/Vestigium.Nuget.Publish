@@ -36,6 +36,8 @@ public static class DotnetCli
         log(removed == 0 ? "no packed files" : $"cleaned {removed} files");
         return 0;
     }
+
+    public static async Task<int> PackAsync(PackableProject project, string outputFolder, Action<string> log, CancellationToken token)
     {
         var repo = project.RepoPath;
         var output = Path.IsPathRooted(outputFolder)

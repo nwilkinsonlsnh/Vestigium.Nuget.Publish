@@ -161,6 +161,9 @@ public sealed partial class MainViewModel : ObservableObject
         DotnetCli.CleanPacks(repos, OutputFolder, Append);
         Status = "Cleaned packs";
     }
+
+    [RelayCommand]
+    private async Task ScanAsync()
     {
         await RefreshReposAsync();
         LoadProjects();
