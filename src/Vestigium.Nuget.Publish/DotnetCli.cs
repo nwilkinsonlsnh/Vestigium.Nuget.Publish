@@ -6,7 +6,36 @@ namespace Vestigium.Nuget.Publish;
 
 public static class DotnetCli
 {
-    public static async Task<int> PackAsync(PackableProject project, string outputFolder, Action<string> log, CancellationToken token)
+    public static int CleanPacks(IEnumerable<string> repoPaths, string outputFolder, Action<string> log)
+    {
+        var removed = 0;
+        foreach (var repo in repoPaths.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var output = Path.IsPathRooted(outputFolder)
+                ? outputFolder
+                : Path.Combine(repo, outputFolder);
+            if (!Directory.Exists(output))
+                continue;
+
+            foreach (var file in Directory.EnumerateFiles(output, "*.nupkg")
+                         .Concat(Directory.EnumerateFiles(output, "*.snupkg")))
+            {
+                try
+                {
+                    File.Delete(file);
+                    removed++;
+                    log($"deleted {Path.GetFileName(file)}");
+                }
+                catch (IOException ex)
+                {
+                    log($"{Path.GetFileName(file)}  {ex.Message}");
+                }
+            }
+        }
+
+        log(removed == 0 ? "no packed files" : $"cleaned {removed} files");
+        return 0;
+    }
     {
         var repo = project.RepoPath;
         var output = Path.IsPathRooted(outputFolder)

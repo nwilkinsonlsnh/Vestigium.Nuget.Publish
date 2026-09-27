@@ -153,7 +153,14 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ScanAsync()
+    private void CleanPacks()
+    {
+        var repos = SelectedRepos.Count > 0
+            ? SelectedRepos.Select(r => r.Path)
+            : Repos.Select(r => r.Path);
+        DotnetCli.CleanPacks(repos, OutputFolder, Append);
+        Status = "Cleaned packs";
+    }
     {
         await RefreshReposAsync();
         LoadProjects();
