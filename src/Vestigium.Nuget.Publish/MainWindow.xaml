@@ -29,23 +29,16 @@
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="220" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="280" />
       </Grid.ColumnDefinitions>
       <Label Content="API key" Style="{StaticResource Label.Standard}" VerticalAlignment="Center" />
       <PasswordBox x:Name="KeyBox" Grid.Column="1" Margin="8,0,8,0" Height="28"
+                   PasswordChanged="KeyBox_PasswordChanged"
                    Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
                    Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    CaretBrush="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
-      <Button Grid.Column="2" Content="Save key" Style="{StaticResource Button.Primary}" Click="SaveKey_Click" Padding="16,4" Margin="0,0,8,0" />
-      <TextBlock Grid.Column="3" VerticalAlignment="Center"
-                 Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}"
-                 Text="{Binding KeyStatus}" />
-      <Button Grid.Column="4" Content="Clear key" Style="{StaticResource Button.Secondary}" Command="{Binding ClearKeyCommand}" Padding="16,4" Margin="8,0,8,0" />
-      <TextBox Grid.Column="5" Style="{StaticResource TextBox.Standard}" Width="280"
+      <TextBox Grid.Column="2" Style="{StaticResource TextBox.Standard}"
                Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"
                ToolTip="NuGet source"
                Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
@@ -93,7 +86,11 @@
 
       <DockPanel Grid.Column="2">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-          <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
+          <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,12,0" />
+          <RadioButton Content="Keep" IsChecked="{Binding IsBumpKeep}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
+          <RadioButton Content="Patch" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
+          <RadioButton Content="Minor" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" Margin="0,0,12,0" VerticalAlignment="Center" />
+          <RadioButton Content="Major" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" Margin="0,0,16,0" VerticalAlignment="Center" />
           <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
           <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
@@ -109,7 +106,7 @@
                  Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
                  Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
         <DataGrid ItemsSource="{Binding Projects}"
-                  SelectedItem="{Binding SelectedProject}"
+                  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
                   Style="{StaticResource DataGrid.Compact}"
                   IsReadOnly="True"
                   AutoGenerateColumns="False"

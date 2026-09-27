@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
 
 namespace Vestigium.Nuget.Publish;
@@ -9,6 +10,11 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = new MainViewModel();
+        Closed += (_, _) =>
+        {
+            KeyBox.Clear();
+            Vm.ForgetKey();
+        };
     }
 
     private MainViewModel Vm => (MainViewModel)DataContext;
@@ -22,9 +28,9 @@ public partial class MainWindow : Window
             Vm.AddRoot(dialog.FolderName);
     }
 
-    private void SaveKey_Click(object sender, RoutedEventArgs e)
+    private void KeyBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
-        Vm.SaveKey(KeyBox.Password);
-        KeyBox.Clear();
+        Vm.ApiKey = KeyBox.Password;
+        Vm.NotifyKey();
     }
 }

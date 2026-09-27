@@ -13,7 +13,7 @@ public sealed class PackableProject
 
     public required string ProjectPath { get; init; }
 
-    public required string Version { get; init; }
+    public required string Version { get; set; }
 }
 
 public static class RepoScanner

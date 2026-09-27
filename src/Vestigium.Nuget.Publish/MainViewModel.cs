@@ -18,7 +18,7 @@ public sealed partial class MainViewModel : ObservableObject
         Projects = [];
         Source = _settings.Source;
         OutputFolder = _settings.OutputFolder;
-        HasKey = !string.IsNullOrWhiteSpace(PublishStore.LoadApiKey());
+        PublishStore.ClearApiKey();
         if (Roots.Count == 0)
         {
             var clone = @"D:\Source\Clone";
@@ -33,11 +33,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<PackableProject> Projects { get; }
 
-    [ObservableProperty]
-    private string? _selectedRoot;
+    public string? ApiKey { get; set; }
 
     [ObservableProperty]
-    private string? _selectedRepo;
+    private string? _selectedRoot;
 
     [ObservableProperty]
     private PackableProject? _selectedProject;
@@ -54,16 +53,51 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _busy;
 
-    public string KeyStatus => HasKey ? "Key saved on this machine" : "No key saved";
-
-    partial void OnHasKeyChanged(bool value) => OnPropertyChanged(nameof(KeyStatus));
-
     [ObservableProperty]
     private string _status = "Idle";
+
+    [ObservableProperty]
+    private VersionBump _bump = VersionBump.Patch;
+
+    public bool IsBumpKeep
+    {
+        get => Bump == VersionBump.Keep;
+        set { if (value) Bump = VersionBump.Keep; }
+    }
+
+    public bool IsBumpPatch
+    {
+        get => Bump == VersionBump.Patch;
+        set { if (value) Bump = VersionBump.Patch; }
+    }
+
+    public bool IsBumpMinor
+    {
+        get => Bump == VersionBump.Minor;
+        set { if (value) Bump = VersionBump.Minor; }
+    }
+
+    public bool IsBumpMajor
+    {
+        get => Bump == VersionBump.Major;
+        set { if (value) Bump = VersionBump.Major; }
+    }
+
+    partial void OnBumpChanged(VersionBump value)
+    {
+        OnPropertyChanged(nameof(IsBumpKeep));
+        OnPropertyChanged(nameof(IsBumpPatch));
+        OnPropertyChanged(nameof(IsBumpMinor));
+        OnPropertyChanged(nameof(IsBumpMajor));
+    }
 
     partial void OnSourceChanged(string value) => Persist();
 
     partial void OnOutputFolderChanged(string value) => Persist();
+
+    partial void OnSelectedProjectChanged(PackableProject? value) => NotifyRun();
+
+    partial void OnBusyChanged(bool value) => NotifyRun();
 
     public void AddRoot(string path)
     {
@@ -74,6 +108,8 @@ public sealed partial class MainViewModel : ObservableObject
         Persist();
         Append($"root {path}");
     }
+
+    public void ForgetKey() => ApiKey = null;
 
     [RelayCommand]
     private void RemoveRoot()
@@ -89,79 +125,26 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Repos.Clear();
         Projects.Clear();
+        SelectedProject = null;
         foreach (var repo in RepoScanner.ListRepos(Roots))
             Repos.Add(repo);
         foreach (var project in RepoScanner.ListProjects(Repos))
             Projects.Add(project);
+        if (Projects.Count > 0)
+            SelectedProject = Projects[0];
         Status = $"{Repos.Count} repos  {Projects.Count} packable";
         Append(Status);
-    }
-
-    public void SaveKey(string key)
-    {
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            Append("API key blank — not saved");
-            return;
-        }
-
-        PublishStore.SaveApiKey(key);
-        HasKey = true;
-        Status = "API key saved on this machine";
-        Append(Status);
-    }
-
-    [RelayCommand]
-    private void ClearKey()
-    {
-        PublishStore.ClearApiKey();
-        HasKey = false;
-        Append("API key cleared");
+        NotifyRun();
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
-    private async Task PackAsync()
-    {
-        if (SelectedProject is null)
-            return;
-        await RunAsync(() => DotnetCli.PackAsync(SelectedProject, OutputFolder, Append, Token()));
-    }
+    private Task PackAsync() => RunAsync(push: false);
 
-    [RelayCommand(CanExecute = nameof(CanRun))]
-    private async Task PushAsync()
-    {
-        if (SelectedProject is null)
-            return;
-        var key = PublishStore.LoadApiKey();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            Append("Save an API key first");
-            return;
-        }
+    [RelayCommand(CanExecute = nameof(CanPush))]
+    private Task PushAsync() => RunAsync(push: true, pack: false);
 
-        await RunAsync(() => DotnetCli.PushAsync(SelectedProject, OutputFolder, Source, key, Append, Token()));
-    }
-
-    [RelayCommand(CanExecute = nameof(CanRun))]
-    private async Task PackAndPushAsync()
-    {
-        if (SelectedProject is null)
-            return;
-        var key = PublishStore.LoadApiKey();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            Append("Save an API key first");
-            return;
-        }
-
-        await RunAsync(async () =>
-        {
-            var pack = await DotnetCli.PackAsync(SelectedProject, OutputFolder, Append, Token());
-            if (pack != 0)
-                return pack;
-            return await DotnetCli.PushAsync(SelectedProject, OutputFolder, Source, key, Append, Token());
-        });
-    }
+    [RelayCommand(CanExecute = nameof(CanPush))]
+    private Task PackAndPushAsync() => RunAsync(push: true, pack: true);
 
     [RelayCommand]
     private void Cancel()
@@ -172,6 +155,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     private bool CanRun() => !Busy && SelectedProject is not null;
 
+    private bool CanPush() => CanRun() && !string.IsNullOrWhiteSpace(ApiKey);
+
+    private void NotifyRun()
+    {
+        PackCommand.NotifyCanExecuteChanged();
+        PushCommand.NotifyCanExecuteChanged();
+        PackAndPushCommand.NotifyCanExecuteChanged();
+    }
+
+    public void NotifyKey() => NotifyRun();
+
     private CancellationToken Token()
     {
         _cts?.Dispose();
@@ -179,17 +173,79 @@ public sealed partial class MainViewModel : ObservableObject
         return _cts.Token;
     }
 
-    private async Task RunAsync(Func<Task<int>> work)
+    private async Task RunAsync(bool push, bool pack = true)
     {
+        if (SelectedProject is null)
+            return;
+
         Busy = true;
-        PackCommand.NotifyCanExecuteChanged();
-        PushCommand.NotifyCanExecuteChanged();
-        PackAndPushCommand.NotifyCanExecuteChanged();
         Status = "Running";
+        var token = Token();
+        var project = SelectedProject;
         try
         {
-            var code = await work();
-            Status = code == 0 ? "Done" : $"Failed  {code}";
+            var git = await GitSync.EnsureCurrentAsync(project.RepoPath, Append, token);
+            if (git != 0)
+            {
+                Status = "Git blocked pack";
+                return;
+            }
+
+            if (pack && Bump != VersionBump.Keep)
+            {
+                var next = VersionBumper.BumpProject(project.ProjectPath, Bump, out var previous);
+                if (next is null)
+                {
+                    Append($"no <Version> in {project.ProjectName}");
+                    Status = "Failed";
+                    return;
+                }
+
+                Append($"{project.ProjectName} {previous} → {next}");
+                var commit = await GitSync.CommitAndPushAsync(
+                    project.RepoPath,
+                    project.ProjectPath,
+                    $"chore: bump {project.ProjectName} to {next}",
+                    Append,
+                    token);
+                if (commit != 0)
+                {
+                    Status = "Version commit failed";
+                    return;
+                }
+
+                project.Version = next;
+                SelectedProject = project;
+            }
+
+            if (pack)
+            {
+                var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token);
+                if (packed != 0)
+                {
+                    Status = $"Pack failed  {packed}";
+                    return;
+                }
+            }
+
+            if (push)
+            {
+                if (string.IsNullOrWhiteSpace(ApiKey))
+                {
+                    Append("API key is empty — paste it for this session");
+                    Status = "No key";
+                    return;
+                }
+
+                var pushed = await DotnetCli.PushAsync(project, OutputFolder, Source, ApiKey, Append, token);
+                if (pushed != 0)
+                {
+                    Status = $"Push failed  {pushed}";
+                    return;
+                }
+            }
+
+            Status = "Done";
             Append(Status);
         }
         catch (OperationCanceledException)
@@ -205,9 +261,6 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             Busy = false;
-            PackCommand.NotifyCanExecuteChanged();
-            PushCommand.NotifyCanExecuteChanged();
-            PackAndPushCommand.NotifyCanExecuteChanged();
         }
     }
 
