@@ -266,6 +266,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         return redacted;
     }
+
+    [RelayCommand]
+    private void Cancel()
     {
         try { _cts?.Cancel(); }
         catch (ObjectDisposedException) { }
