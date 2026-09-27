@@ -33,4 +33,11 @@ public partial class MainWindow : Window
         Vm.ApiKey = KeyBox.Password;
         Vm.NotifyKey();
     }
+
+    private void RepoList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListBox list)
+            return;
+        Vm.ApplyRepoSelection(list.SelectedItems.OfType<RepoRow>());
+    }
 }

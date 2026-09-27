@@ -25,6 +25,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<RepoRow> Repos { get; }
 
+    public ObservableCollection<RepoRow> SelectedRepos { get; } = [];
+
     public ObservableCollection<PackableProject> Projects { get; }
 
     public string? ApiKey { get; set; }
@@ -122,32 +124,61 @@ public sealed partial class MainViewModel : ObservableObject
         Persist();
     }
 
-    [RelayCommand]
-    private async Task ScanAsync()
+    public void ApplyRepoSelection(IEnumerable<RepoRow> rows)
+    {
+        SelectedRepos.Clear();
+        foreach (var row in rows)
+            SelectedRepos.Add(row);
+        SelectedRepo = SelectedRepos.LastOrDefault();
+        LoadProjects();
+        SynchronizeCommand.NotifyCanExecuteChanged();
+        CopyHeadCommand.NotifyCanExecuteChanged();
+    }
+
+    public void LoadProjects()
     {
         Projects.Clear();
         SelectedProject = null;
-        await RefreshReposAsync();
-        foreach (var project in RepoScanner.ListProjects(Repos.Select(r => r.Path)))
+        var paths = SelectedRepos.Count > 0
+            ? SelectedRepos.Select(r => r.Path)
+            : [];
+        foreach (var project in RepoScanner.ListProjects(paths))
             Projects.Add(project);
         if (Projects.Count > 0)
             SelectedProject = Projects[0];
-        Status = $"{Repos.Count} repos  {Projects.Count} packable";
-        Append(Status);
+        Status = $"{SelectedRepos.Count} selected  {Projects.Count} packable";
         NotifyRun();
+    }
+
+    [RelayCommand]
+    private async Task ScanAsync()
+    {
+        await RefreshReposAsync();
+        LoadProjects();
+        Append($"{Repos.Count} repos on disk");
     }
 
     [RelayCommand(CanExecute = nameof(CanSync))]
     private async Task SynchronizeAsync()
     {
-        if (SelectedRepo is null)
+        if (SelectedRepos.Count == 0)
             return;
         Busy = true;
         try
         {
-            var code = await GitSync.SyncAsync(SelectedRepo.Path, Append, Token());
-            SelectedRepo.Head = await GitSync.DescribeAsync(SelectedRepo.Path, CancellationToken.None);
-            Status = code == 0 ? $"Synced  {SelectedRepo.Head}" : "Sync failed";
+            foreach (var repo in SelectedRepos.ToArray())
+            {
+                var code = await GitSync.SyncAsync(repo.Path, Append, Token());
+                repo.Head = await GitSync.DescribeAsync(repo.Path, CancellationToken.None);
+                if (code != 0)
+                    Status = $"Sync failed  {repo.Name}";
+            }
+
+            if (SelectedRepos.Count == 1)
+                Status = $"Synced  {SelectedRepos[0].Head}";
+            else
+                Status = $"Synced  {SelectedRepos.Count} repos";
+            LoadProjects();
         }
         finally
         {
@@ -158,13 +189,14 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSync))]
     private void CopyHead()
     {
-        if (SelectedRepo is null || string.IsNullOrWhiteSpace(SelectedRepo.Head) || SelectedRepo.Head == "—")
+        var text = string.Join(Environment.NewLine, SelectedRepos.Select(r => $"{r.Name}  {r.Head}"));
+        if (string.IsNullOrWhiteSpace(text))
             return;
-        System.Windows.Clipboard.SetText(SelectedRepo.Head);
-        Append($"copied {SelectedRepo.Head}");
+        System.Windows.Clipboard.SetText(text);
+        Append("copied HEAD");
     }
 
-    private bool CanSync() => !Busy && SelectedRepo is not null;
+    private bool CanSync() => !Busy && SelectedRepos.Count > 0;
 
     private async Task RefreshReposAsync()
     {
