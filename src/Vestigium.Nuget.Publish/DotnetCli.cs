@@ -81,11 +81,11 @@ public static class DotnetCli
             ? outputFolder
             : Path.Combine(repo, outputFolder);
         Directory.CreateDirectory(output);
-        log($"restore {project.ProjectName}");
+        log($"restore {project.PackageId}");
         var restore = await RunAsync("dotnet", $"restore \"{project.ProjectPath}\"", repo, log, token);
         if (restore != 0)
             return restore;
-        log($"pack {project.ProjectName} {project.Version}");
+        log($"pack {project.PackageId} {project.Version}");
         return await RunAsync(
             "dotnet",
             $"pack \"{project.ProjectPath}\" -c Release -o \"{output}\"",
@@ -106,14 +106,10 @@ public static class DotnetCli
         var output = Path.IsPathRooted(outputFolder)
             ? outputFolder
             : Path.Combine(repo, outputFolder);
-        var id = project.ProjectName;
-        var nupkg = Directory.Exists(output)
-            ? Directory.EnumerateFiles(output, $"{id}.{project.Version}.nupkg").FirstOrDefault()
-              ?? Directory.EnumerateFiles(output, $"{id}.*.nupkg").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
-            : null;
+        var nupkg = FindPackage(output, project);
         if (nupkg is null)
         {
-            log($"no nupkg for {id} in {output}");
+            log($"no nupkg for {project.PackageId} {project.Version} in {output}");
             return 1;
         }
 
@@ -124,6 +120,20 @@ public static class DotnetCli
             repo,
             log,
             token);
+    }
+
+    private static string? FindPackage(string output, PackableProject project)
+    {
+        if (!Directory.Exists(output))
+            return null;
+
+        var exact = Path.Combine(output, $"{project.PackageId}.{project.Version}.nupkg");
+        if (File.Exists(exact))
+            return exact;
+
+        return Directory.EnumerateFiles(output, $"{project.PackageId}.*.nupkg")
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault();
     }
 
     private static async Task<int> RunAsync(string file, string args, string work, Action<string> log, CancellationToken token)
