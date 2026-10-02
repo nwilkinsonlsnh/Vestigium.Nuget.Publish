@@ -42,6 +42,10 @@ public static class RepoScanner
         @"<IsPackable>\s*false\s*</IsPackable>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    private static readonly Regex PackableTrue = new(
+        @"<IsPackable>\s*true\s*</IsPackable>",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     public static IReadOnlyList<string> ListRepos(IEnumerable<string> roots)
     {
         var repos = new List<string>();
@@ -78,7 +82,8 @@ public static class RepoScanner
             foreach (var csproj in Directory.EnumerateFiles(repo, "*.csproj", SearchOption.AllDirectories))
             {
                 if (csproj.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
-                    || csproj.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+                    || csproj.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                    || csproj.Contains($"{Path.DirectorySeparatorChar}samples{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -91,18 +96,18 @@ public static class RepoScanner
                 if (projectName.Contains("Tests", StringComparison.OrdinalIgnoreCase)
                     || projectName.Contains("InventoryLab", StringComparison.OrdinalIgnoreCase)
                     || projectName.Contains("MenuLab", StringComparison.OrdinalIgnoreCase)
+                    || projectName.Contains("ThemeLab", StringComparison.OrdinalIgnoreCase)
                     || projectName.Contains("Documentation", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (!xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase)
-                    && !VersionTag.IsMatch(xml)
-                    && !xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase)
-                    && !NuspecFileTag.IsMatch(xml))
-                {
+                var marked = xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase)
+                    || VersionTag.IsMatch(xml)
+                    || xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase)
+                    || NuspecFileTag.IsMatch(xml);
+                if (!marked && !InheritedPackable(csproj))
                     continue;
-                }
 
                 var nuspec = ReadNuspec(csproj, xml);
                 var version = nuspec.Version
@@ -127,6 +132,20 @@ public static class RepoScanner
             .OrderBy(r => r.RepoName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(r => r.PackageId, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static bool InheritedPackable(string csproj)
+    {
+        var dir = new DirectoryInfo(Path.GetDirectoryName(csproj)!);
+        while (dir is not null)
+        {
+            var props = Path.Combine(dir.FullName, "Directory.Build.props");
+            if (File.Exists(props) && PackableTrue.IsMatch(File.ReadAllText(props)))
+                return true;
+            dir = dir.Parent;
+        }
+
+        return false;
     }
 
     private static (string? Id, string? Version, string? Path) ReadNuspec(string csproj, string xml)
