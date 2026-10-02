@@ -90,14 +90,18 @@ public static class GitSync
 
     public static async Task<int> CommitAndPushAsync(
         string repoPath,
-        string filePath,
+        IReadOnlyList<string> filePaths,
         string message,
         Action<string> log,
         CancellationToken token)
     {
-        var add = await RunAsync("git", $"add -- \"{filePath}\"", repoPath, log, token);
-        if (add != 0)
-            return add;
+        foreach (var filePath in filePaths.Where(File.Exists))
+        {
+            var add = await RunAsync("git", $"add -- \"{filePath}\"", repoPath, log, token);
+            if (add != 0)
+                return add;
+        }
+
         var commit = await RunAsync("git", $"commit -m \"{message}\"", repoPath, log, token);
         if (commit != 0)
             return commit;
