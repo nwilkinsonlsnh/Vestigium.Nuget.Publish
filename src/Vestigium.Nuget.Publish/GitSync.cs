@@ -102,9 +102,26 @@ public static class GitSync
                 return add;
         }
 
+        var staged = await ReadAsync("git", "diff --cached --name-only", repoPath, token);
+        if (string.IsNullOrWhiteSpace(staged))
+        {
+            log("version already committed — pack continues");
+            return 0;
+        }
+
         var commit = await RunAsync("git", $"commit -m \"{message}\"", repoPath, log, token);
         if (commit != 0)
+        {
+            var status = await ReadAsync("git", "status --porcelain", repoPath, token);
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                log("version already committed — pack continues");
+                return 0;
+            }
+
             return commit;
+        }
+
         return await RunAsync("git", "push", repoPath, log, token);
     }
 
