@@ -11,7 +11,11 @@ public sealed class PackableProject
 
     public required string ProjectName { get; init; }
 
+    public required string PackageId { get; init; }
+
     public required string ProjectPath { get; init; }
+
+    public string? NuspecPath { get; init; }
 
     public required string Version { get; set; }
 }
@@ -20,6 +24,14 @@ public static class RepoScanner
 {
     private static readonly Regex VersionTag = new(
         @"<Version>\s*([^<]+)\s*</Version>",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex PackageIdTag = new(
+        @"<id>\s*([^<]+)\s*</id>",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex NuspecFileTag = new(
+        @"<NuspecFile>\s*([^<]+)\s*</NuspecFile>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex PackableFalse = new(
@@ -82,21 +94,26 @@ public static class RepoScanner
 
                 if (!xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase)
                     && !VersionTag.IsMatch(xml)
-                    && !xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase))
+                    && !xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase)
+                    && !NuspecFileTag.IsMatch(xml))
                 {
                     continue;
                 }
 
-                var version = VersionTag.Match(xml).Success
-                    ? VersionTag.Match(xml).Groups[1].Value.Trim()
-                    : ReadDirectoryVersion(csproj) ?? "—";
+                var nuspec = ReadNuspec(csproj, xml);
+                var version = nuspec.Version
+                    ?? (VersionTag.Match(xml).Success ? VersionTag.Match(xml).Groups[1].Value.Trim() : null)
+                    ?? ReadDirectoryVersion(csproj)
+                    ?? "—";
 
                 rows.Add(new PackableProject
                 {
                     RepoName = name,
                     RepoPath = repo,
                     ProjectName = projectName,
+                    PackageId = nuspec.Id ?? projectName,
                     ProjectPath = csproj,
+                    NuspecPath = nuspec.Path,
                     Version = version
                 });
             }
@@ -104,8 +121,27 @@ public static class RepoScanner
 
         return rows
             .OrderBy(r => r.RepoName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(r => r.ProjectName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.PackageId, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static (string? Id, string? Version, string? Path) ReadNuspec(string csproj, string xml)
+    {
+        var match = NuspecFileTag.Match(xml);
+        if (!match.Success)
+            return (null, null, null);
+
+        var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(csproj)!, match.Groups[1].Value.Trim()));
+        if (!File.Exists(path))
+            return (null, null, path);
+
+        var nuspec = File.ReadAllText(path);
+        var id = PackageIdTag.Match(nuspec);
+        var version = VersionTag.Match(nuspec);
+        return (
+            id.Success ? id.Groups[1].Value.Trim() : null,
+            version.Success ? version.Groups[1].Value.Trim() : null,
+            path);
     }
 
     private static bool LooksLikeRepo(string path)
