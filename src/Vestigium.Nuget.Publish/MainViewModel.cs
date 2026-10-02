@@ -339,7 +339,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (pack && Bump != VersionBump.Keep)
             {
-                var next = VersionBumper.BumpProject(project.ProjectPath, Bump, out var previous);
+                var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, Bump, out var previous);
                 if (next is null)
                 {
                     Append($"no <Version> in {project.ProjectName}");
@@ -347,11 +347,14 @@ public sealed partial class MainViewModel : ObservableObject
                     return;
                 }
 
-                Append($"{project.ProjectName} {previous} → {next}");
+                Append($"{project.PackageId} {previous} \u2192 {next}");
+                var files = string.IsNullOrWhiteSpace(project.NuspecPath)
+                    ? new[] { project.ProjectPath }
+                    : new[] { project.ProjectPath, project.NuspecPath };
                 var commit = await GitSync.CommitAndPushAsync(
                     project.RepoPath,
-                    project.ProjectPath,
-                    $"chore: bump {project.ProjectName} to {next}",
+                    files,
+                    $"chore: bump {project.PackageId} to {next}",
                     Append,
                     token);
                 if (commit != 0)
@@ -365,7 +368,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
             else if (pack)
             {
-                Append($"pack {project.ProjectName} {project.Version}  no bump");
+                Append($"pack {project.PackageId} {project.Version}  no bump");
             }
 
             if (pack)
@@ -382,7 +385,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 if (string.IsNullOrWhiteSpace(ApiKey))
                 {
-                    Append("API key is empty — paste it for this session");
+                    Append("API key is empty \u2014 paste it for this session");
                     Status = "No key";
                     return;
                 }
