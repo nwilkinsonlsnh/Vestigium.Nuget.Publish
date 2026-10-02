@@ -85,7 +85,7 @@ public static class DotnetCli
         var restore = await RunAsync("dotnet", $"restore \"{project.ProjectPath}\"", repo, log, token);
         if (restore != 0)
             return restore;
-        log($"pack {project.PackageId} {project.Version}");
+        log($"pack {project.PackageId} {project.LocalVersion}");
         return await RunAsync(
             "dotnet",
             $"pack \"{project.ProjectPath}\" -c Release -o \"{output}\"",
@@ -109,7 +109,7 @@ public static class DotnetCli
         var nupkg = FindPackage(output, project);
         if (nupkg is null)
         {
-            log($"no nupkg for {project.PackageId} {project.Version} in {output}");
+            log($"no nupkg for {project.PackageId} {project.LocalVersion} in {output}");
             return 1;
         }
 
@@ -127,7 +127,7 @@ public static class DotnetCli
         if (!Directory.Exists(output))
             return null;
 
-        var exact = Path.Combine(output, $"{project.PackageId}.{project.Version}.nupkg");
+        var exact = Path.Combine(output, $"{project.PackageId}.{project.LocalVersion}.nupkg");
         if (File.Exists(exact))
             return exact;
 
