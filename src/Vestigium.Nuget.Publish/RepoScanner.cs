@@ -1,9 +1,10 @@
 using System.IO;
 using System.Text.RegularExpressions;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Vestigium.Nuget.Publish;
 
-public sealed class PackableProject
+public sealed partial class PackableProject : ObservableObject
 {
     public required string RepoName { get; init; }
 
@@ -17,7 +18,10 @@ public sealed class PackableProject
 
     public string? NuspecPath { get; init; }
 
-    public required string Version { get; set; }
+    public required string LocalVersion { get; set; }
+
+    [ObservableProperty]
+    private string _publishedVersion = "…";
 }
 
 public static class RepoScanner
@@ -114,7 +118,7 @@ public static class RepoScanner
                     PackageId = nuspec.Id ?? projectName,
                     ProjectPath = csproj,
                     NuspecPath = nuspec.Path,
-                    Version = version
+                    LocalVersion = version
                 });
             }
         }
