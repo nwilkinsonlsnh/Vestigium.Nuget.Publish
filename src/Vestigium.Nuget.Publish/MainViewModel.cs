@@ -8,6 +8,7 @@ namespace Vestigium.Nuget.Publish;
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly PublishSettings _settings;
+    private readonly Dictionary<string, string> _pushed = new(StringComparer.OrdinalIgnoreCase);
     private CancellationTokenSource? _cts;
 
     public MainViewModel()
@@ -168,11 +169,11 @@ public sealed partial class MainViewModel : ObservableObject
             try
             {
                 var published = await NugetCatalog.LatestAsync(project.PackageId, Source, CancellationToken.None);
-                project.PublishedVersion = published ?? "none";
+                project.PublishedVersion = Newer(published, Remembered(project.PackageId)) ?? "none";
             }
             catch (Exception ex)
             {
-                project.PublishedVersion = "none";
+                project.PublishedVersion = Remembered(project.PackageId) ?? "none";
                 Append($"{project.PackageId} nuget lookup failed  {ex.Message}");
             }
         }
@@ -339,18 +340,49 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task<string> BasisAsync(PackableProject project, CancellationToken token)
     {
-        if (System.Version.TryParse(Normalize(project.PublishedVersion), out _))
-            return project.PublishedVersion;
+        var known = Newer(project.PublishedVersion, Remembered(project.PackageId));
+        if (System.Version.TryParse(Normalize(known ?? ""), out _))
+            return known!;
 
         var published = await NugetCatalog.LatestAsync(project.PackageId, Source, token);
-        if (!string.IsNullOrWhiteSpace(published))
+        var basis = Newer(published, Remembered(project.PackageId));
+        if (!string.IsNullOrWhiteSpace(basis))
         {
-            project.PublishedVersion = published;
-            return published;
+            project.PublishedVersion = basis;
+            return basis;
         }
 
         Append($"no nuget version for {project.PackageId} — bumping local {project.LocalVersion}");
         return project.LocalVersion;
+    }
+
+    private string? Remembered(string packageId) =>
+        _pushed.TryGetValue(packageId, out var version) ? version : null;
+
+    private static string? Newer(string? left, string? right)
+    {
+        var leftOk = System.Version.TryParse(Normalize(left ?? ""), out var leftVersion);
+        var rightOk = System.Version.TryParse(Normalize(right ?? ""), out var rightVersion);
+        if (!leftOk && !rightOk)
+            return null;
+        if (!rightOk)
+            return left;
+        if (!leftOk)
+            return right;
+        return rightVersion > leftVersion ? right : left;
+    }
+
+    private void MarkPushed(PackableProject project)
+    {
+        _pushed[project.PackageId] = project.LocalVersion;
+        project.PublishedVersion = project.LocalVersion;
+        Append($"nuget column {project.PackageId} {project.LocalVersion}");
+        var index = Projects.IndexOf(project);
+        if (index < 0)
+            return;
+        Projects.RemoveAt(index);
+        Projects.Insert(index, project);
+        SelectedProject = project;
     }
 
     private static string Normalize(string raw)
@@ -441,7 +473,7 @@ public sealed partial class MainViewModel : ObservableObject
                     return;
                 }
 
-                project.PublishedVersion = project.LocalVersion;
+                MarkPushed(project);
             }
 
             Status = "Done";
