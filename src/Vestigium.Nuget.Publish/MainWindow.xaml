@@ -172,10 +172,11 @@
                   SelectionMode="Single"
                   HeadersVisibility="Column">
           <DataGrid.Columns>
-            <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="180" />
-            <DataGridTextColumn Header="Project" Binding="{Binding ProjectName}" Width="*" />
-            <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="90" />
-            <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="420" />
+            <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" />
+            <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" />
+            <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" />
+            <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" />
+            <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="360" />
           </DataGrid.Columns>
         </DataGrid>
       </DockPanel>
