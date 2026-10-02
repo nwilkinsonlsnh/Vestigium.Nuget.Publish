@@ -17,12 +17,10 @@ public static class VersionBumper
         @"<Version>\s*([^<]+)\s*</Version>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public static string? BumpProject(string csprojPath, string? nuspecPath, VersionBump bump, out string previous)
+    public static string? BumpProject(string csprojPath, string? nuspecPath, string basis, VersionBump bump, out string previous)
     {
         previous = "";
-        var xml = File.ReadAllText(csprojPath);
-        var match = VersionTag.Match(xml);
-        if (!match.Success || !System.Version.TryParse(Normalize(match.Groups[1].Value), out var version))
+        if (!System.Version.TryParse(Normalize(basis), out var version))
             return null;
 
         previous = version.ToString();
@@ -37,15 +35,21 @@ public static class VersionBumper
         };
 
         var written = next.ToString();
-        File.WriteAllText(csprojPath, VersionTag.Replace(xml, $"<Version>{written}</Version>", 1));
-        if (!string.IsNullOrWhiteSpace(nuspecPath) && File.Exists(nuspecPath))
-        {
-            var nuspec = File.ReadAllText(nuspecPath);
-            if (VersionTag.IsMatch(nuspec))
-                File.WriteAllText(nuspecPath, VersionTag.Replace(nuspec, $"<version>{written}</version>", 1));
-        }
-
+        Write(csprojPath, written);
+        if (!string.IsNullOrWhiteSpace(nuspecPath))
+            Write(nuspecPath, written);
         return written;
+    }
+
+    private static void Write(string path, string version)
+    {
+        if (!File.Exists(path))
+            return;
+        var xml = File.ReadAllText(path);
+        if (!VersionTag.IsMatch(xml))
+            return;
+        var tag = path.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase) ? "version" : "Version";
+        File.WriteAllText(path, VersionTag.Replace(xml, $"<{tag}>{version}</{tag}>", 1));
     }
 
     private static string Normalize(string raw)
