@@ -17,6 +17,10 @@ public static class VersionBumper
         @"<Version>\s*([^<]+)\s*</Version>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    private static readonly Regex PropertyGroupEnd = new(
+        "</PropertyGroup>",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     public static string? BumpProject(string csprojPath, string? nuspecPath, string basis, VersionBump bump, out string previous)
     {
         previous = "";
@@ -46,10 +50,22 @@ public static class VersionBumper
         if (!File.Exists(path))
             return;
         var xml = File.ReadAllText(path);
-        if (!VersionTag.IsMatch(xml))
-            return;
         var tag = path.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase) ? "version" : "Version";
-        File.WriteAllText(path, VersionTag.Replace(xml, $"<{tag}>{version}</{tag}>", 1));
+        if (VersionTag.IsMatch(xml))
+        {
+            File.WriteAllText(path, VersionTag.Replace(xml, $"<{tag}>{version}</{tag}>", 1));
+            return;
+        }
+
+        if (path.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var end = PropertyGroupEnd.Match(xml);
+        if (!end.Success)
+            return;
+
+        var insert = $"    <Version>{version}</Version>{Environment.NewLine}  ";
+        File.WriteAllText(path, xml.Insert(end.Index, insert));
     }
 
     private static string Normalize(string raw)
