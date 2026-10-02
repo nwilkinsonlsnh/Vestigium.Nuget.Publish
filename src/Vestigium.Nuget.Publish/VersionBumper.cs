@@ -17,7 +17,7 @@ public static class VersionBumper
         @"<Version>\s*([^<]+)\s*</Version>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public static string? BumpProject(string csprojPath, VersionBump bump, out string previous)
+    public static string? BumpProject(string csprojPath, string? nuspecPath, VersionBump bump, out string previous)
     {
         previous = "";
         var xml = File.ReadAllText(csprojPath);
@@ -38,6 +38,13 @@ public static class VersionBumper
 
         var written = next.ToString();
         File.WriteAllText(csprojPath, VersionTag.Replace(xml, $"<Version>{written}</Version>", 1));
+        if (!string.IsNullOrWhiteSpace(nuspecPath) && File.Exists(nuspecPath))
+        {
+            var nuspec = File.ReadAllText(nuspecPath);
+            if (VersionTag.IsMatch(nuspec))
+                File.WriteAllText(nuspecPath, VersionTag.Replace(nuspec, $"<version>{written}</version>", 1));
+        }
+
         return written;
     }
 
