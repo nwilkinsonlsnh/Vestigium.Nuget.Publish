@@ -158,6 +158,24 @@ public sealed partial class MainViewModel : ObservableObject
             SelectedProject = Projects[0];
         Status = $"{SelectedRepos.Count} selected  {Projects.Count} packable";
         NotifyRun();
+        _ = RefreshPublishedAsync();
+    }
+
+    private async Task RefreshPublishedAsync()
+    {
+        foreach (var project in Projects.ToArray())
+        {
+            try
+            {
+                var published = await NugetCatalog.LatestAsync(project.PackageId, Source, CancellationToken.None);
+                project.PublishedVersion = published ?? "none";
+            }
+            catch (Exception ex)
+            {
+                project.PublishedVersion = "none";
+                Append($"{project.PackageId} nuget lookup failed  {ex.Message}");
+            }
+        }
     }
 
     [RelayCommand]
@@ -319,6 +337,31 @@ public sealed partial class MainViewModel : ObservableObject
         return _cts.Token;
     }
 
+    private async Task<string> BasisAsync(PackableProject project, CancellationToken token)
+    {
+        if (System.Version.TryParse(Normalize(project.PublishedVersion), out _))
+            return project.PublishedVersion;
+
+        var published = await NugetCatalog.LatestAsync(project.PackageId, Source, token);
+        if (!string.IsNullOrWhiteSpace(published))
+        {
+            project.PublishedVersion = published;
+            return published;
+        }
+
+        Append($"no nuget version for {project.PackageId} — bumping local {project.LocalVersion}");
+        return project.LocalVersion;
+    }
+
+    private static string Normalize(string raw)
+    {
+        raw = raw.Trim();
+        var dash = raw.IndexOf('-');
+        if (dash > 0)
+            raw = raw[..dash];
+        return raw.Count(c => c == '.') == 1 ? raw + ".0" : raw;
+    }
+
     private async Task RunAsync(bool push, bool pack = true)
     {
         if (SelectedProject is null)
@@ -339,15 +382,16 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (pack && Bump != VersionBump.Keep)
             {
-                var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, Bump, out var previous);
+                var basis = await BasisAsync(project, token);
+                var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, basis, Bump, out var previous);
                 if (next is null)
                 {
-                    Append($"no <Version> in {project.ProjectName}");
+                    Append($"no version to bump for {project.PackageId}");
                     Status = "Failed";
                     return;
                 }
 
-                Append($"{project.PackageId} {previous} \u2192 {next}");
+                Append($"{project.PackageId} nuget {previous} → {next}");
                 var files = string.IsNullOrWhiteSpace(project.NuspecPath)
                     ? new[] { project.ProjectPath }
                     : new[] { project.ProjectPath, project.NuspecPath };
@@ -363,12 +407,12 @@ public sealed partial class MainViewModel : ObservableObject
                     return;
                 }
 
-                project.Version = next;
+                project.LocalVersion = next;
                 SelectedProject = project;
             }
             else if (pack)
             {
-                Append($"pack {project.PackageId} {project.Version}  no bump");
+                Append($"pack {project.PackageId} {project.LocalVersion}  no bump");
             }
 
             if (pack)
@@ -385,7 +429,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 if (string.IsNullOrWhiteSpace(ApiKey))
                 {
-                    Append("API key is empty \u2014 paste it for this session");
+                    Append("API key is empty — paste it for this session");
                     Status = "No key";
                     return;
                 }
@@ -396,6 +440,8 @@ public sealed partial class MainViewModel : ObservableObject
                     Status = $"Push failed  {pushed}";
                     return;
                 }
+
+                project.PublishedVersion = project.LocalVersion;
             }
 
             Status = "Done";
