@@ -338,11 +338,11 @@ public sealed partial class MainViewModel : ObservableObject
         return _cts.Token;
     }
 
-    private async Task<string> BasisAsync(PackableProject project, CancellationToken token)
+    private async Task<string?> BasisAsync(PackableProject project, CancellationToken token)
     {
         var known = Newer(project.PublishedVersion, Remembered(project.PackageId));
         if (System.Version.TryParse(Normalize(known ?? ""), out _))
-            return known!;
+            return known;
 
         var published = await NugetCatalog.LatestAsync(project.PackageId, Source, token);
         var basis = Newer(published, Remembered(project.PackageId));
@@ -352,8 +352,8 @@ public sealed partial class MainViewModel : ObservableObject
             return basis;
         }
 
-        Append($"no nuget version for {project.PackageId} — bumping local {project.LocalVersion}");
-        return project.LocalVersion;
+        Append($"no nuget version for {project.PackageId} — publishing local {project.LocalVersion}");
+        return null;
     }
 
     private string? Remembered(string packageId) =>
@@ -415,32 +415,39 @@ public sealed partial class MainViewModel : ObservableObject
             if (pack && Bump != VersionBump.Keep)
             {
                 var basis = await BasisAsync(project, token);
-                var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, basis, Bump, out var previous);
-                if (next is null)
+                if (basis is null)
                 {
-                    Append($"no version to bump for {project.PackageId}");
-                    Status = "Failed";
-                    return;
+                    Append($"pack {project.PackageId} {project.LocalVersion}  first publish");
                 }
-
-                Append($"{project.PackageId} nuget {previous} → {next}");
-                var files = string.IsNullOrWhiteSpace(project.NuspecPath)
-                    ? new[] { project.ProjectPath }
-                    : new[] { project.ProjectPath, project.NuspecPath };
-                var commit = await GitSync.CommitAndPushAsync(
-                    project.RepoPath,
-                    files,
-                    $"chore: bump {project.PackageId} to {next}",
-                    Append,
-                    token);
-                if (commit != 0)
+                else
                 {
-                    Status = "Version commit failed";
-                    return;
-                }
+                    var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, basis, Bump, out var previous);
+                    if (next is null)
+                    {
+                        Append($"no version to bump for {project.PackageId}");
+                        Status = "Failed";
+                        return;
+                    }
 
-                project.LocalVersion = next;
-                SelectedProject = project;
+                    Append($"{project.PackageId} nuget {previous} → {next}");
+                    var files = string.IsNullOrWhiteSpace(project.NuspecPath)
+                        ? new[] { project.ProjectPath }
+                        : new[] { project.ProjectPath, project.NuspecPath };
+                    var commit = await GitSync.CommitAndPushAsync(
+                        project.RepoPath,
+                        files,
+                        $"chore: bump {project.PackageId} to {next}",
+                        Append,
+                        token);
+                    if (commit != 0)
+                    {
+                        Status = "Version commit failed";
+                        return;
+                    }
+
+                    project.LocalVersion = next;
+                    SelectedProject = project;
+                }
             }
             else if (pack)
             {
