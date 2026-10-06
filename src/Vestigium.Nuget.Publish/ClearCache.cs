@@ -4,16 +4,11 @@ namespace Vestigium.Nuget.Publish;
 
 public sealed partial class MainViewModel
 {
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSync))]
     private async Task ClearCacheAsync()
     {
-        if (Busy)
-            return;
         if (SelectedRepos.Count == 0)
-        {
-            Append("select a repo");
             return;
-        }
 
         Busy = true;
         Status = "Clearing cache";
