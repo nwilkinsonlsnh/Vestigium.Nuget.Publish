@@ -74,6 +74,19 @@ public static class DotnetCli
         return 0;
     }
 
+    public static async Task<int> ClearHttpCacheAndRestoreAsync(string repoPath, Action<string> log, CancellationToken token)
+    {
+        log("dotnet nuget locals http-cache --clear");
+        var cleared = await RunAsync("dotnet", "nuget locals http-cache --clear", repoPath, log, token);
+        if (cleared != 0)
+            return cleared;
+
+        var sln = Directory.EnumerateFiles(repoPath, "*.sln").OrderBy(Path.GetFileName).FirstOrDefault();
+        var target = sln ?? repoPath;
+        log($"dotnet restore \"{target}\"");
+        return await RunAsync("dotnet", $"restore \"{target}\"", repoPath, log, token);
+    }
+
     public static async Task<int> PackAsync(PackableProject project, string outputFolder, Action<string> log, CancellationToken token)
     {
         var repo = project.RepoPath;
