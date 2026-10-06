@@ -104,6 +104,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SynchronizeCommand.NotifyCanExecuteChanged();
         CopyHeadCommand.NotifyCanExecuteChanged();
+        ClearCacheCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnBusyChanged(bool value)
@@ -111,6 +112,7 @@ public sealed partial class MainViewModel : ObservableObject
         NotifyRun();
         SynchronizeCommand.NotifyCanExecuteChanged();
         CopyHeadCommand.NotifyCanExecuteChanged();
+        ClearCacheCommand.NotifyCanExecuteChanged();
     }
 
     public void AddRoot(string path)
@@ -144,6 +146,7 @@ public sealed partial class MainViewModel : ObservableObject
         LoadProjects();
         SynchronizeCommand.NotifyCanExecuteChanged();
         CopyHeadCommand.NotifyCanExecuteChanged();
+        ClearCacheCommand.NotifyCanExecuteChanged();
     }
 
     public void LoadProjects()
@@ -266,6 +269,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         SynchronizeCommand.NotifyCanExecuteChanged();
         CopyHeadCommand.NotifyCanExecuteChanged();
+        ClearCacheCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
