@@ -8,11 +8,15 @@
     <RootNamespace>Vestigium.Nuget.Publish</RootNamespace>
     <AssemblyName>Vestigium.Nuget.Publish</AssemblyName>
     <ApplicationTitle>Nuget Publish</ApplicationTitle>
+    <ApplicationIcon>Assets\NugetPublish.ico</ApplicationIcon>
     <Company>Wilkinson Business</Company>
     <Authors>Vestigium</Authors>
     <IsPackable>false</IsPackable>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\NugetPublish.ico" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
