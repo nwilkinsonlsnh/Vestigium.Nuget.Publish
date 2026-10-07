@@ -81,10 +81,8 @@ public static class DotnetCli
         if (cleared != 0)
             return cleared;
 
-        var sln = Directory.EnumerateFiles(repoPath, "*.sln").OrderBy(Path.GetFileName).FirstOrDefault();
-        var target = sln ?? repoPath;
-        log($"dotnet restore \"{target}\"");
-        return await RunAsync("dotnet", $"restore \"{target}\"", repoPath, log, token);
+        log("cache cleared. Pack the dependency before the project that references it. A solution restore is not run here.");
+        return 0;
     }
 
     public static async Task<int> PackAsync(PackableProject project, string outputFolder, Action<string> log, CancellationToken token)
