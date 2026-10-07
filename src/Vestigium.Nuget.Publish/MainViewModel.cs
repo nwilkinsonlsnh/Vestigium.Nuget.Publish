@@ -420,6 +420,14 @@ public sealed partial class MainViewModel : ObservableObject
         return null;
     }
 
+    private PackableProject? FindDependency(PackableProject project, string missing)
+    {
+        var id = missing.Split(' ', 2)[0];
+        return Projects.FirstOrDefault(item =>
+            item.RepoPath.Equals(project.RepoPath, StringComparison.OrdinalIgnoreCase)
+            && item.PackageId.Equals(id, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static readonly Regex PackageReferenceTag = new(
         @"PackageReference\s+Include=""(?<id>[^""]+)""\s+Version=""(?<ver>[^""]+)""",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -514,14 +522,50 @@ public sealed partial class MainViewModel : ObservableObject
             if (pack)
             {
                 var missing = await UnpublishedDependencyAsync(project, token);
+                string? extraSource = null;
                 if (missing is not null)
                 {
-                    Append($"pack blocked: {project.PackageId} needs {missing} on the feed. Publish that package first.");
-                    Status = "Dependency not published";
-                    return;
+                    var dependency = FindDependency(project, missing);
+                    if (dependency is null)
+                    {
+                        Append($"pack blocked: {project.PackageId} needs {missing} on the feed. Publish that package first.");
+                        Status = "Dependency not published";
+                        return;
+                    }
+
+                    Append($"packing {dependency.PackageId} {dependency.LocalVersion} before {project.PackageId}");
+                    var dependencyPacked = await DotnetCli.PackAsync(dependency, OutputFolder, Append, token);
+                    if (dependencyPacked != 0)
+                    {
+                        Status = $"Pack failed  {dependency.PackageId}";
+                        return;
+                    }
+
+                    if (push)
+                    {
+                        if (string.IsNullOrWhiteSpace(ApiKey))
+                        {
+                            Append("API key is empty — paste it for this session");
+                            Status = "No key";
+                            return;
+                        }
+
+                        var dependencyPushed = await DotnetCli.PushAsync(dependency, OutputFolder, Source, ApiKey, Append, token);
+                        if (dependencyPushed != 0)
+                        {
+                            Status = $"Push failed  {dependency.PackageId}";
+                            return;
+                        }
+
+                        MarkPushed(dependency);
+                    }
+
+                    extraSource = Path.IsPathRooted(OutputFolder)
+                        ? OutputFolder
+                        : Path.Combine(project.RepoPath, OutputFolder);
                 }
 
-                var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token);
+                var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token, extraSource);
                 if (packed != 0)
                 {
                     Status = $"Pack failed  {packed}";

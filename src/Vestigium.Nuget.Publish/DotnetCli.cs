@@ -85,21 +85,29 @@ public static class DotnetCli
         return 0;
     }
 
-    public static async Task<int> PackAsync(PackableProject project, string outputFolder, Action<string> log, CancellationToken token)
+    public static async Task<int> PackAsync(
+        PackableProject project,
+        string outputFolder,
+        Action<string> log,
+        CancellationToken token,
+        string? extraSource = null)
     {
         var repo = project.RepoPath;
         var output = Path.IsPathRooted(outputFolder)
             ? outputFolder
             : Path.Combine(repo, outputFolder);
         Directory.CreateDirectory(output);
+        var sources = string.IsNullOrWhiteSpace(extraSource)
+            ? ""
+            : $" --source \"{extraSource}\" --source https://api.nuget.org/v3/index.json";
         log($"restore {project.PackageId}");
-        var restore = await RunAsync("dotnet", $"restore \"{project.ProjectPath}\"", repo, log, token);
+        var restore = await RunAsync("dotnet", $"restore \"{project.ProjectPath}\"{sources}", repo, log, token);
         if (restore != 0)
             return restore;
         log($"pack {project.PackageId} {project.LocalVersion}");
         return await RunAsync(
             "dotnet",
-            $"pack \"{project.ProjectPath}\" -c Release -o \"{output}\"",
+            $"pack \"{project.ProjectPath}\" -c Release -o \"{output}\"{sources}",
             repo,
             log,
             token);
