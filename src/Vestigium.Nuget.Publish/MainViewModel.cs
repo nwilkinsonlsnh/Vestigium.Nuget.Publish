@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -376,6 +377,53 @@ public sealed partial class MainViewModel : ObservableObject
         return rightVersion > leftVersion ? right : left;
     }
 
+    private static bool AtLeast(string? local, string? next)
+    {
+        var localOk = System.Version.TryParse(Normalize(local ?? ""), out var localVersion);
+        var nextOk = System.Version.TryParse(Normalize(next ?? ""), out var nextVersion);
+        return localOk && nextOk && localVersion >= nextVersion;
+    }
+
+    private static string? Next(string? basis, VersionBump bump)
+    {
+        if (!System.Version.TryParse(Normalize(basis ?? ""), out var version))
+            return null;
+        var next = bump switch
+        {
+            VersionBump.Major => new System.Version(version.Major + 1, 0, 0),
+            VersionBump.Minor => new System.Version(version.Major, version.Minor + 1, 0),
+            VersionBump.Keep => version,
+            _ => new System.Version(version.Major, version.Minor, Math.Max(0, version.Build) + 1)
+        };
+        return next.ToString();
+    }
+
+    private async Task<string?> UnpublishedDependencyAsync(PackableProject project, CancellationToken token)
+    {
+        if (!File.Exists(project.ProjectPath))
+            return null;
+
+        var xml = await File.ReadAllTextAsync(project.ProjectPath, token);
+        foreach (Match match in PackageReferenceTag.Matches(xml))
+        {
+            var id = match.Groups["id"].Value;
+            var version = match.Groups["ver"].Value;
+            if (!id.StartsWith("Vestigium.", StringComparison.OrdinalIgnoreCase))
+                continue;
+            var published = await NugetCatalog.LatestAsync(id, Source, token);
+            if (!System.Version.TryParse(Normalize(version), out var wanted))
+                continue;
+            if (!System.Version.TryParse(Normalize(published ?? ""), out var have) || have < wanted)
+                return $"{id} {version}";
+        }
+
+        return null;
+    }
+
+    private static readonly Regex PackageReferenceTag = new(
+        @"PackageReference\s+Include=""(?<id>[^""]+)""\s+Version=""(?<ver>[^""]+)""",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private void MarkPushed(PackableProject project)
     {
         _pushed[project.PackageId] = project.LocalVersion;
@@ -419,13 +467,18 @@ public sealed partial class MainViewModel : ObservableObject
             if (pack && Bump != VersionBump.Keep)
             {
                 var basis = await BasisAsync(project, token);
-                if (basis is null)
+                var floor = Newer(basis, project.LocalVersion) ?? project.LocalVersion;
+                if (basis is null && string.IsNullOrWhiteSpace(floor))
                 {
                     Append($"pack {project.PackageId} {project.LocalVersion}  first publish");
                 }
+                else if (AtLeast(project.LocalVersion, Next(floor, Bump)))
+                {
+                    Append($"keeping {project.PackageId} {project.LocalVersion} — nuget {basis ?? "none"} would not raise it");
+                }
                 else
                 {
-                    var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, basis, Bump, out var previous);
+                    var next = VersionBumper.BumpProject(project.ProjectPath, project.NuspecPath, floor, Bump, out var previous);
                     if (next is null)
                     {
                         Append($"no version to bump for {project.PackageId}");
@@ -460,6 +513,14 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (pack)
             {
+                var missing = await UnpublishedDependencyAsync(project, token);
+                if (missing is not null)
+                {
+                    Append($"pack blocked: {project.PackageId} needs {missing} on the feed. Publish that package first.");
+                    Status = "Dependency not published";
+                    return;
+                }
+
                 var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token);
                 if (packed != 0)
                 {
