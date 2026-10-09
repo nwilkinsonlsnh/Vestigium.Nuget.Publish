@@ -231,7 +231,7 @@ public static class RepoScanner
         Directory.CreateDirectory(build);
         var pkg = name.Replace('.', '_');
         var targets = Path.Combine(build, name + ".targets");
-        File.WriteAllText(targets, "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFiles=\"@(_ToolFiles->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
+        File.WriteAllText(targets, "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFiles=\"@(_ToolFiles->'$(OutputPath)%(Filename)%(Extension)')\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
         var include = "<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\\" />";
         if (!xml.Contains(name + ".targets", StringComparison.OrdinalIgnoreCase))
             xml += "\n  <ItemGroup>\n    " + include + "\n  </ItemGroup>\n";
