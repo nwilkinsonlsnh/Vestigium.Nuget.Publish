@@ -49,3 +49,12 @@ public partial class MainWindow : Window
         Vm.ApplyRepoSelection(list.SelectedItems.OfType<RepoRow>());
     }
 }
+
+public sealed class InverseBoolConverter : System.Windows.Data.IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => value is true ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => throw new NotSupportedException();
+}

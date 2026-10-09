@@ -156,11 +156,53 @@ public static class RepoScanner
         var xml = File.ReadAllText(csproj);
         xml = PackableFalse.Replace(xml, "");
         if (!xml.Contains("<IsPackable>true</IsPackable>", StringComparison.OrdinalIgnoreCase))
-            xml = InsertBeforeGroup(xml, "    <IsPackable>true</IsPackable>\n    <PackAsTool>true</PackAsTool>\n  ");
-        else if (!xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase))
-            xml = InsertBeforeGroup(xml, "    <PackAsTool>true</PackAsTool>\n  ");
+            xml = InsertBeforeGroup(xml, "    <IsPackable>true</IsPackable>\n  ");
         if (!VersionTag.IsMatch(xml))
             xml = InsertBeforeGroup(xml, "    <Version>1.0.0</Version>\n  ");
+        File.WriteAllText(csproj, xml);
+    }
+
+    public static void MakeUnpackable(string csproj)
+    {
+        var xml = File.ReadAllText(csproj);
+        xml = PackableTrue.Replace(xml, "<IsPackable>false</IsPackable>");
+        xml = xml.Replace("<PackAsTool>true</PackAsTool>", "", StringComparison.OrdinalIgnoreCase);
+        if (!xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase))
+            xml = InsertBeforeGroup(xml, "    <IsPackable>false</IsPackable>\n  ");
+        File.WriteAllText(csproj, xml);
+    }
+
+    public static void MakeTool(string csproj)
+    {
+        MakePackable(csproj);
+        var xml = File.ReadAllText(csproj);
+        if (!xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase))
+            xml = InsertBeforeGroup(xml, "    <PackAsTool>true</PackAsTool>\n    <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>\n  ");
+        var name = Path.GetFileNameWithoutExtension(csproj);
+        var dir = Path.GetDirectoryName(csproj)!;
+        var build = Path.Combine(dir, "build");
+        Directory.CreateDirectory(build);
+        var targets = Path.Combine(build, name + ".targets");
+        if (!File.Exists(targets))
+        {
+            var pkg = name.Replace('.', '_');
+            File.WriteAllText(targets, """
+<Project>
+  <Target Name="CopyVestigiumTool" AfterTargets="Build">
+    <ItemGroup>
+      <_ToolFiles Include="$(Pkg__PKG__)\tools\net10.0-windows\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ToolFiles)"
+          DestinationFiles="@(_ToolFiles->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ToolFiles)' != ''" />
+  </Target>
+</Project>
+""".Replace("__PKG__", pkg));
+        }
+        var include = "<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\" />";
+        if (!xml.Contains(name + ".targets", StringComparison.OrdinalIgnoreCase))
+            xml += "\n  <ItemGroup>\n    " + include + "\n  </ItemGroup>\n";
         File.WriteAllText(csproj, xml);
     }
 

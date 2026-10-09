@@ -219,14 +219,36 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (SelectedProject.IsPackable && SelectedProject.IsTool)
+        RepoScanner.MakePackable(SelectedProject.ProjectPath);
+        Append("Marked packable " + SelectedProject.ProjectPath);
+        LoadProjects();
+    }
+
+    [RelayCommand]
+    private void MakeUnpackable()
+    {
+        if (SelectedProject is null)
         {
-            Status = SelectedProject.PackageId + " is already a tool.";
+            Status = "Select a project.";
             return;
         }
 
-        RepoScanner.MakePackable(SelectedProject.ProjectPath);
-        Append("Marked packable tool " + SelectedProject.ProjectPath);
+        RepoScanner.MakeUnpackable(SelectedProject.ProjectPath);
+        Append("Marked unpackable " + SelectedProject.ProjectPath);
+        LoadProjects();
+    }
+
+    [RelayCommand]
+    private void MakeTool()
+    {
+        if (SelectedProject is null)
+        {
+            Status = "Select a project.";
+            return;
+        }
+
+        RepoScanner.MakeTool(SelectedProject.ProjectPath);
+        Append("Marked tool " + SelectedProject.ProjectPath);
         LoadProjects();
     }
 

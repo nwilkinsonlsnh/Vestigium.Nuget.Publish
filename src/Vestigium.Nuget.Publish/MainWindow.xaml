@@ -1,6 +1,7 @@
 <Window x:Class="Vestigium.Nuget.Publish.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Vestigium.Nuget.Publish"
         Title="Nuget Publish"
         Icon="Assets/NugetPublish.ico"
         Height="820" Width="1560"
@@ -13,6 +14,24 @@
         <ResourceDictionary Source="pack://application:,,,/Vestigium.Controls;component/Shell/MenuChrome.xaml" />
       </ResourceDictionary.MergedDictionaries>
       <BooleanToVisibilityConverter x:Key="BoolToVis" />
+      <local:InverseBoolConverter x:Key="InverseBoolToVis" />
+      <Style x:Key="PackText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+            <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Status.Error}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+          </DataTrigger>
+          <MultiDataTrigger>
+            <MultiDataTrigger.Conditions>
+              <Condition Binding="{Binding IsPackable}" Value="False" />
+              <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="False" />
+            </MultiDataTrigger.Conditions>
+            <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+          </MultiDataTrigger>
+        </Style.Triggers>
+      </Style>
       <Style x:Key="Radio.Bump" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
         <Setter Property="Margin" Value="0,0,16,0" />
@@ -144,7 +163,6 @@
             <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
             <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
             <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
-            <Button Content="Make packable" Style="{StaticResource Button.Secondary}" Command="{Binding MakePackableCommand}" Padding="16,4" Margin="0,0,8,0" />
             <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
             <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
             <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
@@ -158,24 +176,39 @@
                     CanUserAddRows="False"
                     SelectionMode="Single"
                     HeadersVisibility="Column">
+            <DataGrid.ContextMenu>
+              <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                <MenuItem Header="Make packable" Command="{Binding MakePackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource InverseBoolToVis}}" />
+                <MenuItem Header="Make unpackable" Command="{Binding MakeUnpackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource BoolToVis}}" />
+                <MenuItem Header="Make tool" Command="{Binding MakeToolCommand}" />
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.CellStyle>
+              <Style TargetType="DataGridCell">
+                <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Status.Error}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                  </DataTrigger>
+                  <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                      <Condition Binding="{Binding IsPackable}" Value="False" />
+                      <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                  </MultiDataTrigger>
+                </Style.Triggers>
+              </Style>
+            </DataGrid.CellStyle>
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" />
-              <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" />
-              <DataGridTextColumn Header="State" Binding="{Binding PackState}" Width="110">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding IsPackable}" Value="False">
-                        <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
-                        <Setter Property="FontWeight" Value="SemiBold" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-              <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" />
-              <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" />
-              <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="280" />
+              <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="State" Binding="{Binding PackState}" Width="110" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="280" ElementStyle="{StaticResource PackText}" />
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>
