@@ -64,6 +64,15 @@
           </Setter.Value>
         </Setter>
       </Style>
+      <Style x:Key="PackSeparator" TargetType="Separator">
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="Separator">
+              <Border Height="1" Margin="8,4" Background="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
       <Style x:Key="PackMenu" TargetType="ContextMenu">
         <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Surface.Card}" />
         <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
@@ -234,20 +243,22 @@
             </DataGrid.ColumnHeaderStyle>
             <DataGrid.ContextMenu>
               <ContextMenu Style="{StaticResource PackMenu}" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="Make packable" Style="{StaticResource PackMenuItem}" Command="{Binding MakePackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource InverseBoolToVis}}">
                   <MenuItem.Icon><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Make unpackable" Style="{StaticResource PackMenuItem}" Command="{Binding MakeUnpackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource BoolToVis}}">
                   <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
+                <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="Make tool" Style="{StaticResource PackMenuItem}" Command="{Binding MakeToolCommand}" Visibility="{Binding SelectedProject.IsTool, Converter={StaticResource InverseBoolToVis}}">
                   <MenuItem.Icon><TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Remove tool" Style="{StaticResource PackMenuItem}" Command="{Binding RemoveToolCommand}" Visibility="{Binding SelectedProject.IsTool, Converter={StaticResource BoolToVis}}">
-                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
-                  <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
+                  <MenuItem.Icon><TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Clear cache" Style="{StaticResource PackMenuItem}" Command="{Binding ClearCacheCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE7AD;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
