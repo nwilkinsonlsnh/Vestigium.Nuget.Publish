@@ -172,6 +172,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void LoadProjects()
     {
+        var selectedId = SelectedProject?.PackageId;
         Projects.Clear();
         SelectedProject = null;
         var paths = SelectedRepos.Count > 0
@@ -179,8 +180,7 @@ public sealed partial class MainViewModel : ObservableObject
             : [];
         foreach (var project in RepoScanner.ListProjects(paths, Exclusions))
             Projects.Add(project);
-        if (Projects.Count > 0)
-            SelectedProject = Projects[0];
+        SelectedProject = Projects.FirstOrDefault(item => item.PackageId == selectedId) ?? Projects.FirstOrDefault();
         var hidden = Projects.Count(item => !item.IsPackable);
         Status = $"{SelectedRepos.Count} selected  {Projects.Count} in solution  {hidden} not packable";
         NotifyRun();
