@@ -219,7 +219,6 @@
               <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
             </StackPanel>
           </DockPanel>
-          </StackPanel>
           <DataGrid ItemsSource="{Binding Projects}"
                     SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
                     Style="{StaticResource DataGrid.Compact}"
