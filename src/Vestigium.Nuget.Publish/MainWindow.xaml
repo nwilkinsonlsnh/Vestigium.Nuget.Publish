@@ -298,7 +298,7 @@
           </DataGrid>
         </DockPanel>
         <DockPanel Visibility="{Binding ShowLog, Converter={StaticResource BoolToVis}}" HorizontalAlignment="Stretch">
-          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,8">
             <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="12,4" Margin="0,0,8,0" />
             <Button Content="Copy log" Style="{StaticResource Button.Secondary}" Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
             <Button Content="Clear log" Style="{StaticResource Button.Secondary}" Command="{Binding ClearLogCommand}" Padding="12,4" />
