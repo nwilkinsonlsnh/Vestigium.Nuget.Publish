@@ -342,6 +342,8 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             Busy = false;
+            if (pack)
+                LoadProjects();
         }
     }
 
