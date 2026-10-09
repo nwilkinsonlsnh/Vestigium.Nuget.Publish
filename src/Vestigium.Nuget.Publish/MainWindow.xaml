@@ -210,7 +210,7 @@
           <RadioButton DockPanel.Dock="Right" Content="Settings" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowSettings}" />
           <StackPanel Orientation="Horizontal">
             <RadioButton Content="Packages" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowPackages}" Margin="0,0,8,0" />
-            <RadioButton Content="Log" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowLog}" />
+            <RadioButton Content="Session Log" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowLog}" />
           </StackPanel>
         </DockPanel>
         <DockPanel Visibility="{Binding ShowPackages, Converter={StaticResource BoolToVis}}">
@@ -236,11 +236,6 @@
                     CanUserAddRows="False"
                     SelectionMode="Single"
                     HeadersVisibility="Column">
-            <DataGrid.ColumnHeaderStyle>
-              <Style TargetType="DataGridColumnHeader">
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
-              </Style>
-            </DataGrid.ColumnHeaderStyle>
             <DataGrid.ContextMenu>
               <ContextMenu Style="{StaticResource PackMenu}" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                 <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
@@ -301,16 +296,14 @@
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>
-        <DockPanel Visibility="{Binding ShowLog, Converter={StaticResource BoolToVis}}">
-          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-            <TextBlock Text="Session log" VerticalAlignment="Center" Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-              <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="12,4" Margin="0,0,8,0" />
-              <Button Content="Copy log" Style="{StaticResource Button.Secondary}" Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
-              <Button Content="Clear log" Style="{StaticResource Button.Secondary}" Command="{Binding ClearLogCommand}" Padding="12,4" />
-            </StackPanel>
-          </DockPanel>
+        <DockPanel Visibility="{Binding ShowLog, Converter={StaticResource BoolToVis}}" HorizontalAlignment="Stretch">
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
+            <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="12,4" Margin="0,0,8,0" />
+            <Button Content="Copy log" Style="{StaticResource Button.Secondary}" Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
+            <Button Content="Clear log" Style="{StaticResource Button.Secondary}" Command="{Binding ClearLogCommand}" Padding="12,4" />
+          </StackPanel>
           <TextBox x:Name="SessionLog"
+                   HorizontalAlignment="Stretch"
                    Style="{StaticResource TextBox.Standard}"
                    Text="{Binding Log, Mode=OneWay}"
                    IsReadOnly="True"
