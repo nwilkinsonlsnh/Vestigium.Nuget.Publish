@@ -42,6 +42,7 @@ public sealed partial class MainViewModel
         finally
         {
             Busy = false;
+            LoadProjects();
         }
     }
 }

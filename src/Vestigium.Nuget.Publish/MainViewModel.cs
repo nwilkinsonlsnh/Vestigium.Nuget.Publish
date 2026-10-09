@@ -216,6 +216,7 @@ public sealed partial class MainViewModel : ObservableObject
             : Repos.Select(r => r.Path);
         DotnetCli.CleanPacks(repos, OutputFolder, Append);
         Status = "Cleaned packs";
+        LoadProjects();
     }
 
     [RelayCommand]
@@ -342,8 +343,6 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             Busy = false;
-            if (pack)
-                LoadProjects();
         }
     }
 
@@ -747,6 +746,7 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             Busy = false;
+            LoadProjects();
         }
     }
 
