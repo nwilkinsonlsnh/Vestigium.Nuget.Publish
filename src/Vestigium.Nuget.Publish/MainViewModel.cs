@@ -537,6 +537,42 @@ public sealed partial class MainViewModel : ObservableObject
         return next.ToString();
     }
 
+    private List<PackableProject> Dependencies(PackableProject project)
+    {
+        var ordered = new List<PackableProject>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Walk(project, ordered, seen);
+        ordered.RemoveAll(item => item.PackageId.Equals(project.PackageId, StringComparison.OrdinalIgnoreCase));
+        return ordered;
+    }
+
+    private void Walk(PackableProject project, List<PackableProject> ordered, HashSet<string> seen)
+    {
+        if (!seen.Add(project.PackageId) || !File.Exists(project.ProjectPath))
+            return;
+        var xml = File.ReadAllText(project.ProjectPath);
+        foreach (Match match in ProjectReferenceTag.Matches(xml))
+        {
+            var path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(project.ProjectPath)!, match.Groups["path"].Value));
+            var dependency = Projects.FirstOrDefault(item => item.ProjectPath.Equals(path, StringComparison.OrdinalIgnoreCase));
+            if (dependency is not null)
+                Walk(dependency, ordered, seen);
+        }
+
+        foreach (Match match in PackageReferenceTag.Matches(xml))
+        {
+            var id = match.Groups["id"].Value;
+            if (!id.StartsWith("Vestigium.", StringComparison.OrdinalIgnoreCase))
+                continue;
+            var dependency = Projects.FirstOrDefault(item => item.PackageId.Equals(id, StringComparison.OrdinalIgnoreCase));
+            if (dependency is not null)
+                Walk(dependency, ordered, seen);
+        }
+
+        if (project.IsPackable)
+            ordered.Add(project);
+    }
+
     private async Task<string?> UnpublishedDependencyAsync(PackableProject project, CancellationToken token)
     {
         if (!File.Exists(project.ProjectPath))
@@ -569,6 +605,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static readonly Regex PackageReferenceTag = new(
         @"PackageReference\s+Include=""(?<id>[^""]+)""\s+Version=""(?<ver>[^""]+)""",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex ProjectReferenceTag = new(
+        @"ProjectReference\s+Include=""(?<path>[^""]+)""",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private void MarkPushed(PackableProject project)
@@ -657,48 +697,37 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (pack)
             {
-                var missing = await UnpublishedDependencyAsync(project, token);
-                string? extraSource = null;
-                if (missing is not null)
+                var dependencies = Dependencies(project);
+                string? extraSource = dependencies.Count == 0
+                    ? null
+                    : Path.IsPathRooted(OutputFolder) ? OutputFolder : Path.Combine(project.RepoPath, OutputFolder);
+                foreach (var dependency in dependencies)
                 {
-                    var dependency = FindDependency(project, missing);
-                    if (dependency is null)
-                    {
-                        Append($"pack blocked: {project.PackageId} needs {missing} on the feed. Publish that package first.");
-                        Status = "Dependency not published";
-                        return;
-                    }
-
-                    Append($"packing {dependency.PackageId} {dependency.LocalVersion} before {project.PackageId}");
-                    var dependencyPacked = await DotnetCli.PackAsync(dependency, OutputFolder, Append, token);
+                    Append($"packing {dependency.PackageId} {dependency.ProjectVersion} before {project.PackageId}");
+                    var dependencyPacked = await DotnetCli.PackAsync(dependency, OutputFolder, Append, token, extraSource);
                     if (dependencyPacked != 0)
                     {
                         Status = $"Pack failed  {dependency.PackageId}";
                         return;
                     }
 
-                    if (push)
+                    if (!push)
+                        continue;
+                    if (string.IsNullOrWhiteSpace(ApiKey))
                     {
-                        if (string.IsNullOrWhiteSpace(ApiKey))
-                        {
-                            Append("API key is empty — paste it for this session");
-                            Status = "No key";
-                            return;
-                        }
-
-                        var dependencyPushed = await DotnetCli.PushAsync(dependency, OutputFolder, Source, ApiKey, Append, token);
-                        if (dependencyPushed != 0)
-                        {
-                            Status = $"Push failed  {dependency.PackageId}";
-                            return;
-                        }
-
-                        MarkPushed(dependency);
+                        Append("API key is empty — paste it for this session");
+                        Status = "No key";
+                        return;
                     }
 
-                    extraSource = Path.IsPathRooted(OutputFolder)
-                        ? OutputFolder
-                        : Path.Combine(project.RepoPath, OutputFolder);
+                    var dependencyPushed = await DotnetCli.PushAsync(dependency, OutputFolder, Source, ApiKey, Append, token);
+                    if (dependencyPushed != 0)
+                    {
+                        Status = $"Push failed  {dependency.PackageId}";
+                        return;
+                    }
+
+                    MarkPushed(dependency);
                 }
 
                 var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token, extraSource);
