@@ -223,8 +223,8 @@ public static class RepoScanner
     {
         MakePackable(csproj);
         var xml = File.ReadAllText(csproj);
-        if (!xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase))
-            xml = InsertBeforeGroup(xml, "    <PackAsTool>true</PackAsTool>\n    <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>\n  ");
+        if (!xml.Contains("<BuildOutputTargetFolder>tools</BuildOutputTargetFolder>", StringComparison.OrdinalIgnoreCase))
+            xml = InsertBeforeGroup(xml, "    <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>\n  ");
         var name = Path.GetFileNameWithoutExtension(csproj);
         var dir = Path.GetDirectoryName(csproj)!;
         var build = Path.Combine(dir, "build");
