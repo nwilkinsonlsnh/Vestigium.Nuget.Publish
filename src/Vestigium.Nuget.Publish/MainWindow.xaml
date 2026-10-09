@@ -301,7 +301,7 @@
         </DockPanel>
         <DockPanel Visibility="{Binding ShowSettings, Converter={StaticResource BoolToVis}}">
           <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,12" Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}"
-                     Text="A pattern matches the last segment only. Tests, *Lab, Lab*, L?b, and L*b are all valid." />
+                     Text="The last segment only. Tests is exact. *Lab ends with Lab. Lab* starts with Lab. L*b starts with L and ends with b. L?b finds L, one character, b inside that segment." />
           <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBox Width="220" Style="{StaticResource TextBox.Standard}" Text="{Binding ExclusionDraft, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
             <Button Content="Add" Style="{StaticResource Button.Secondary}" Command="{Binding AddExclusionCommand}" Padding="16,4" Margin="0,0,8,0" />

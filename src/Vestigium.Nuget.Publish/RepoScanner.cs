@@ -148,12 +148,14 @@ public static class RepoScanner
 
     private static bool Glob(string segment, string pattern)
     {
-        var regex = "^" + string.Concat(pattern.Select(ch => ch switch
+        var body = string.Concat(pattern.Select(ch => ch switch
         {
             '*' => ".*",
             '?' => ".",
             _ => Regex.Escape(ch.ToString())
-        })) + "$";
+        }));
+        var anchored = pattern.Contains('*') || !pattern.Contains('?');
+        var regex = anchored ? "^" + body + "$" : body;
         return Regex.IsMatch(segment, regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
