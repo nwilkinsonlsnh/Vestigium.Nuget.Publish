@@ -36,11 +36,48 @@
           </MultiDataTrigger>
         </Style.Triggers>
       </Style>
+      <Style x:Key="PackMenuItem" TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+        <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Surface.Card}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="MenuItem">
+              <Border x:Name="Row" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                  <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="8,0,12,0"
+                                    TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Grid>
+              </Border>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                  <Setter TargetName="Row" Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+                  <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Surface.Window}" />
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
       <Style x:Key="PackMenu" TargetType="ContextMenu">
         <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Surface.Card}" />
         <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
         <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="ContextMenu">
+              <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="0">
+                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+              </Border>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
       </Style>
       <Style x:Key="Radio.Bump" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
@@ -188,14 +225,14 @@
                     HeadersVisibility="Column">
             <DataGrid.ContextMenu>
               <ContextMenu Style="{StaticResource PackMenu}" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                <MenuItem Header="Make packable" Command="{Binding MakePackableCommand}" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource InverseBoolToVis}}">
-                  <MenuItem.Icon><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                <MenuItem Header="Make packable" Style="{StaticResource PackMenuItem}" Command="{Binding MakePackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource InverseBoolToVis}}">
+                  <MenuItem.Icon><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Make unpackable" Command="{Binding MakeUnpackableCommand}" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource BoolToVis}}">
-                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                <MenuItem Header="Make unpackable" Style="{StaticResource PackMenuItem}" Command="{Binding MakeUnpackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource BoolToVis}}">
+                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Make tool" Command="{Binding MakeToolCommand}" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}">
-                  <MenuItem.Icon><TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                <MenuItem Header="Make tool" Style="{StaticResource PackMenuItem}" Command="{Binding MakeToolCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
               </ContextMenu>
             </DataGrid.ContextMenu>
