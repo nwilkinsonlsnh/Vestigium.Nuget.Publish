@@ -229,24 +229,9 @@ public static class RepoScanner
         var dir = Path.GetDirectoryName(csproj)!;
         var build = Path.Combine(dir, "build");
         Directory.CreateDirectory(build);
+        var pkg = name.Replace('.', '_');
         var targets = Path.Combine(build, name + ".targets");
-        if (!File.Exists(targets))
-        {
-            var pkg = name.Replace('.', '_');
-            File.WriteAllText(targets, """
-<Project>
-  <Target Name="CopyVestigiumTool" AfterTargets="Build">
-    <ItemGroup>
-      <_ToolFiles Include="$(Pkg__PKG__)\tools\net10.0-windows\**\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_ToolFiles)"
-          DestinationFiles="@(_ToolFiles->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ToolFiles)' != ''" />
-  </Target>
-</Project>
-""".Replace("__PKG__", pkg));
-        }
+        File.WriteAllText(targets, "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFiles=\"@(_ToolFiles->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
         var include = "<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\\" />";
         if (!xml.Contains(name + ".targets", StringComparison.OrdinalIgnoreCase))
             xml += "\n  <ItemGroup>\n    " + include + "\n  </ItemGroup>\n";
