@@ -202,18 +202,23 @@
           <RadioButton Content="Log" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowLog}" />
         </StackPanel>
         <DockPanel Visibility="{Binding ShowPackages, Converter={StaticResource BoolToVis}}">
-          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-            <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
-            <Button Content="Clean packs" Style="{StaticResource Button.Secondary}" Command="{Binding CleanPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
-            <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
-            <Button Content="Clear cache" Style="{StaticResource Button.Secondary}" Command="{Binding ClearCacheCommand}" Padding="16,4" Margin="0,0,12,0" />
-            <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
-            <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
-            <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
-            <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
-            <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
-            <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
-            <Button Content="Cancel" Style="{StaticResource Button.Secondary}" Command="{Binding CancelCommand}" Padding="16,4" />
+          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+              <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
+              <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
+              <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
+              <Button Content="Cancel" Style="{StaticResource Button.Secondary}" Command="{Binding CancelCommand}" Padding="16,4" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
+              <Button Content="Clean packs" Style="{StaticResource Button.Secondary}" Command="{Binding CleanPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
+              <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
+              <Button Content="Clear cache" Style="{StaticResource Button.Secondary}" Command="{Binding ClearCacheCommand}" Padding="16,4" Margin="0,0,12,0" />
+              <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
+              <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
+              <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
+            </StackPanel>
+          </DockPanel>
           </StackPanel>
           <DataGrid ItemsSource="{Binding Projects}"
                     SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
