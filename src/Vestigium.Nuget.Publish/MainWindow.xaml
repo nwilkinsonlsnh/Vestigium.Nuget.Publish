@@ -158,21 +158,21 @@
                     CanUserAddRows="False"
                     SelectionMode="Single"
                     HeadersVisibility="Column">
-            <DataGrid.RowStyle>
-              <Style TargetType="DataGridRow">
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding IsPackable}" Value="False">
-                    <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
-                    <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Surface.Window}" />
-                    <Setter Property="FontWeight" Value="SemiBold" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </DataGrid.RowStyle>
             <DataGrid.Columns>
               <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" />
               <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" />
-              <DataGridTextColumn Header="State" Binding="{Binding PackState}" Width="110" />
+              <DataGridTextColumn Header="State" Binding="{Binding PackState}" Width="110">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsPackable}" Value="False">
+                        <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
               <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" />
               <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" />
               <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="280" />
