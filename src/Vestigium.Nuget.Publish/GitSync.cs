@@ -52,11 +52,8 @@ public static class GitSync
         var porcelain = await ReadAsync("git", "status --porcelain", repoPath, token);
         if (!string.IsNullOrWhiteSpace(porcelain))
         {
-            log("local changes — stashing before sync");
+            log("local changes stay in the pack");
             log(porcelain.Trim());
-            var stashed = await RunAsync("git", "stash push -u -m nuget-publish", repoPath, log, token);
-            if (stashed != 0)
-                return stashed;
         }
 
         var synced = await RunAsync("git", "pull --ff-only", repoPath, log, token);

@@ -267,12 +267,11 @@ public static class RepoScanner
         var dir = Path.GetDirectoryName(csproj)!;
         Directory.CreateDirectory(Path.Combine(dir, "build"));
         var pkg = name.Replace('.', '_');
-        var targetsPath = Path.Combine(dir, "build", name + ".targets");
-        File.WriteAllText(targetsPath, "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFolder=\"$(OutputPath)\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
+        File.WriteAllText(Path.Combine(dir, "build", name + ".targets"), "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFolder=\"$(OutputPath)\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
         if (!xml.Contains(name + ".targets", StringComparison.OrdinalIgnoreCase))
-        {
             xml += "\n  <ItemGroup>\n    <None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\" + name + ".targets\" />\n    <None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"buildTransitive\\" + name + ".targets\" />\n  </ItemGroup>\n";
-        }
+        if (!xml.Contains("PackVestigiumExe", StringComparison.Ordinal))
+            xml += "\n  <Target Name=\"PackVestigiumExe\" BeforeTargets=\"GenerateNuspec\">\n    <Error Text=\"Tool exe was not built at $(TargetDir)$(AssemblyName).exe\" Condition=\"!Exists('$(TargetDir)$(AssemblyName).exe')\" />\n    <ItemGroup>\n      <_ToolPacked Include=\"$(TargetDir)$(AssemblyName).exe\" />\n      <_ToolPacked Include=\"$(TargetDir)*.dll\" />\n      <_ToolPacked Include=\"$(TargetDir)$(AssemblyName).runtimeconfig.json\" />\n      <_ToolPacked Include=\"$(TargetDir)$(AssemblyName).deps.json\" />\n    </ItemGroup>\n    <ItemGroup>\n      <None Include=\"@(_ToolPacked)\" Pack=\"true\" PackagePath=\"tools/$(TargetFramework)/%(Filename)%(Extension)\" />\n    </ItemGroup>\n    <Message Importance=\"high\" Text=\"Packing $(TargetDir)$(AssemblyName).exe into tools/$(TargetFramework)\" />\n  </Target>\n";
         File.WriteAllText(csproj, xml);
     }
 
