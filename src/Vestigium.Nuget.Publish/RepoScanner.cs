@@ -34,7 +34,7 @@ public sealed partial class PackableProject : ObservableObject
     private string _publishedVersion = "…";
 
     [ObservableProperty]
-    private string _isListed = "Pending";
+    private string _isListed = "No";
 }
 
 public static class RepoScanner

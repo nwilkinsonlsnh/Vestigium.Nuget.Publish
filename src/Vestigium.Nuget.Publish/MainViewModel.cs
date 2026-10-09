@@ -468,13 +468,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     private string ListedState(PackableProject project)
     {
-        var packed = project.LocalVersion;
-        var hasPack = !string.IsNullOrWhiteSpace(packed) && packed != "—";
-        var published = project.PublishedVersion;
-        var onFeed = !string.IsNullOrWhiteSpace(published) && published != "none" && published != "…";
+        var hasPack = System.Version.TryParse(Normalize(project.LocalVersion), out var packed);
+        var onFeed = System.Version.TryParse(Normalize(project.PublishedVersion), out var published);
         if (!hasPack)
             return onFeed ? "Yes" : "No";
-        return string.Equals(packed, published, StringComparison.OrdinalIgnoreCase) ? "Yes" : "Pending";
+        if (!onFeed)
+            return "Pending";
+        return packed == published ? "Yes" : "Pending";
     }
 
     private string PackedVersion(PackableProject project)
