@@ -213,6 +213,7 @@
             <RadioButton Content="Session Log" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowLog}" />
           </StackPanel>
         </DockPanel>
+        <Grid>
         <DockPanel Visibility="{Binding ShowPackages, Converter={StaticResource BoolToVis}}">
           <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" LastChildFill="False">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -327,6 +328,7 @@
                    Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
         </DockPanel>
+        </Grid>
       </DockPanel>
     </Grid>
   </DockPanel>
