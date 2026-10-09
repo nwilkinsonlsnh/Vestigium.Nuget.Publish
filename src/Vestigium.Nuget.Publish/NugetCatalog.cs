@@ -48,6 +48,33 @@ public static class NugetCatalog
         return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
+    public static async Task<string> ListedAsync(string packageId, string source, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(packageId))
+            return "No";
+        var id = packageId.Trim().ToLowerInvariant();
+        var url = source.Contains("nuget.org", StringComparison.OrdinalIgnoreCase)
+            ? $"https://api.nuget.org/v3/registration5-gz-semver2/{id}/index.json"
+            : $"{source.TrimEnd('/')}/{id}/index.json";
+        try
+        {
+            using var response = await Http.GetAsync(url, token);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return "No";
+            if (!response.IsSuccessStatusCode)
+                return "Pending";
+            var body = await response.Content.ReadAsStringAsync(token);
+            if (body.Contains("\"listed\":false", StringComparison.OrdinalIgnoreCase)
+                && !body.Contains("\"listed\":true", StringComparison.OrdinalIgnoreCase))
+                return "No";
+            return body.Contains("\"listed\":true", StringComparison.OrdinalIgnoreCase) ? "Yes" : "Pending";
+        }
+        catch (Exception)
+        {
+            return "Pending";
+        }
+    }
+
     private static string Normalize(string raw)
     {
         raw = raw.Trim();

@@ -194,11 +194,13 @@ public sealed partial class MainViewModel : ObservableObject
             try
             {
                 var published = await NugetCatalog.LatestAsync(project.PackageId, Source, CancellationToken.None);
-                project.PublishedVersion = Newer(published, Remembered(project.PackageId)) ?? "none";
+                project.PublishedVersion = string.IsNullOrWhiteSpace(published) ? "none" : published;
+                project.IsListed = await ListedStateAsync(project, published, CancellationToken.None);
             }
             catch (Exception ex)
             {
-                project.PublishedVersion = Remembered(project.PackageId) ?? "none";
+                project.PublishedVersion = "none";
+                project.IsListed = "Pending";
                 Append($"{project.PackageId} nuget lookup failed  {ex.Message}");
             }
         }
@@ -447,20 +449,28 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task<string?> BasisAsync(PackableProject project, CancellationToken token)
     {
-        var known = Newer(project.PublishedVersion, Remembered(project.PackageId));
-        if (System.Version.TryParse(Normalize(known ?? ""), out _))
-            return known;
+        if (System.Version.TryParse(Normalize(project.PublishedVersion), out _))
+            return project.PublishedVersion;
 
         var published = await NugetCatalog.LatestAsync(project.PackageId, Source, token);
-        var basis = Newer(published, Remembered(project.PackageId));
-        if (!string.IsNullOrWhiteSpace(basis))
+        if (!string.IsNullOrWhiteSpace(published))
         {
-            project.PublishedVersion = basis;
-            return basis;
+            project.PublishedVersion = published;
+            return published;
         }
 
         Append($"no nuget version for {project.PackageId} — publishing local {project.LocalVersion}");
         return null;
+    }
+
+    private async Task<string> ListedStateAsync(PackableProject project, string? published, CancellationToken token)
+    {
+        if (_pushed.TryGetValue(project.PackageId, out var pushed)
+            && !string.Equals(pushed, published, StringComparison.OrdinalIgnoreCase))
+            return "Pending";
+        if (string.IsNullOrWhiteSpace(published))
+            return "No";
+        return await NugetCatalog.ListedAsync(project.PackageId, Source, token);
     }
 
     private string? Remembered(string packageId) =>
@@ -577,14 +587,10 @@ public sealed partial class MainViewModel : ObservableObject
             if (pack && Bump != VersionBump.Keep)
             {
                 var basis = await BasisAsync(project, token);
-                var floor = Newer(basis, project.LocalVersion) ?? project.LocalVersion;
-                if (basis is null && string.IsNullOrWhiteSpace(floor))
+                var floor = basis ?? project.LocalVersion;
+                if (basis is null)
                 {
                     Append($"pack {project.PackageId} {project.LocalVersion}  first publish");
-                }
-                else if (AtLeast(project.LocalVersion, Next(floor, Bump)))
-                {
-                    Append($"keeping {project.PackageId} {project.LocalVersion} — nuget {basis ?? "none"} would not raise it");
                 }
                 else
                 {
