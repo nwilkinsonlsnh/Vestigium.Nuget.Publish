@@ -200,7 +200,7 @@ public static class RepoScanner
 </Project>
 """.Replace("__PKG__", pkg));
         }
-        var include = "<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\" />";
+        var include = "<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\\" />";
         if (!xml.Contains(name + ".targets", StringComparison.OrdinalIgnoreCase))
             xml += "\n  <ItemGroup>\n    " + include + "\n  </ItemGroup>\n";
         File.WriteAllText(csproj, xml);
