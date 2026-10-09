@@ -59,9 +59,9 @@ public static class GitSync
                 return stashed;
         }
 
-        var pull = await RunAsync("git", "pull --ff-only", repoPath, log, token);
-        if (pull != 0)
-            return pull;
+        var synced = await RunAsync("git", "pull --ff-only", repoPath, log, token);
+        if (synced != 0)
+            return synced;
 
         var counts = (await ReadAsync("git", "rev-list --left-right --count @{u}...HEAD", repoPath, token)).Trim();
         if (counts.Contains("no upstream", StringComparison.OrdinalIgnoreCase)
