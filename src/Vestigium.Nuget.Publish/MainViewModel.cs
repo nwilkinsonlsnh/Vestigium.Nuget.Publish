@@ -196,13 +196,11 @@ public sealed partial class MainViewModel : ObservableObject
                 var published = await NugetCatalog.LatestAsync(project.PackageId, Source, CancellationToken.None);
                 project.PublishedVersion = string.IsNullOrWhiteSpace(published) ? "none" : published;
                 project.LocalVersion = PackedVersion(project);
-                project.IsListed = ListedState(project);
             }
             catch (Exception ex)
             {
                 project.PublishedVersion = "none";
                 project.LocalVersion = PackedVersion(project);
-                project.IsListed = ListedState(project);
                 Append($"{project.PackageId} nuget lookup failed  {ex.Message}");
             }
         }

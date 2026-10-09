@@ -20,7 +20,41 @@ public sealed partial class PackableProject : ObservableObject
 
     public required string ProjectVersion { get; set; }
 
-    public required string LocalVersion { get; set; }
+    private string _localVersion = "—";
+
+    public string LocalVersion
+    {
+        get => _localVersion;
+        set
+        {
+            if (_localVersion == value)
+                return;
+            _localVersion = value;
+            OnPropertyChanged(nameof(LocalVersion));
+            OnPropertyChanged(nameof(IsListed));
+        }
+    }
+
+    public string IsListed
+    {
+        get
+        {
+            var hasPack = System.Version.TryParse(VersionText(LocalVersion), out var packed);
+            var onFeed = System.Version.TryParse(VersionText(PublishedVersion), out var published);
+            if (!hasPack)
+                return onFeed ? "Yes" : "No";
+            return onFeed && packed == published ? "Yes" : "Pending";
+        }
+    }
+
+    private static string VersionText(string? raw)
+    {
+        raw = raw?.Trim() ?? "";
+        var dash = raw.IndexOf('-');
+        if (dash > 0)
+            raw = raw[..dash];
+        return raw.Count(c => c == '.') == 1 ? raw + ".0" : raw;
+    }
 
     public bool IsPackable { get; init; }
 
@@ -33,8 +67,7 @@ public sealed partial class PackableProject : ObservableObject
     [ObservableProperty]
     private string _publishedVersion = "…";
 
-    [ObservableProperty]
-    private string _isListed = "No";
+    partial void OnPublishedVersionChanged(string value) => OnPropertyChanged(nameof(IsListed));
 }
 
 public static class RepoScanner
@@ -123,7 +156,6 @@ public static class RepoScanner
                     ProjectPath = csproj,
                     NuspecPath = nuspec.Path,
                     ProjectVersion = version,
-                    LocalVersion = "—",
                     IsPackable = packable,
                     IsTool = tool
                 });
