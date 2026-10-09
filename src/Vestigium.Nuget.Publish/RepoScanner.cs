@@ -182,7 +182,9 @@ public static class RepoScanner
         xml = xml.Replace("<PackAsTool>true</PackAsTool>", "", StringComparison.OrdinalIgnoreCase);
         xml = xml.Replace("<BuildOutputTargetFolder>tools</BuildOutputTargetFolder>", "", StringComparison.OrdinalIgnoreCase);
         var name = Path.GetFileNameWithoutExtension(csproj);
-        xml = xml.Replace("<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\" />", "");
+        var marker = name + ".targets";
+        var kept = xml.Split('\n').Where(row => !row.Contains(marker, StringComparison.OrdinalIgnoreCase) || !row.Contains("Pack=\"true\"", StringComparison.OrdinalIgnoreCase));
+        xml = string.Join("\n", kept);
         File.WriteAllText(csproj, xml);
     }
 
