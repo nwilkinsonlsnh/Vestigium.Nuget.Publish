@@ -139,19 +139,22 @@ public static class RepoScanner
             var pattern = raw.Trim().TrimStart('.');
             if (pattern.Length == 0)
                 continue;
-            if (pattern.StartsWith('*'))
-            {
-                var tail = pattern[1..];
-                if (tail.Length > 0 && segment.EndsWith(tail, StringComparison.OrdinalIgnoreCase))
-                    return true;
-                continue;
-            }
-
-            if (string.Equals(segment, pattern, StringComparison.OrdinalIgnoreCase))
+            if (Glob(segment, pattern))
                 return true;
         }
 
         return false;
+    }
+
+    private static bool Glob(string segment, string pattern)
+    {
+        var regex = "^" + string.Concat(pattern.Select(ch => ch switch
+        {
+            '*' => ".*",
+            '?' => ".",
+            _ => Regex.Escape(ch.ToString())
+        })) + "$";
+        return Regex.IsMatch(segment, regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
     private static IEnumerable<string> SolutionProjects(string repo)
