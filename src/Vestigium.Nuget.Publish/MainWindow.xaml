@@ -12,6 +12,7 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/Vestigium.Controls;component/Shell/MenuChrome.xaml" />
       </ResourceDictionary.MergedDictionaries>
+      <BooleanToVisibilityConverter x:Key="BoolToVis" />
       <Style x:Key="Radio.Bump" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Text.Primary}" />
         <Setter Property="Margin" Value="0,0,16,0" />
@@ -131,32 +132,62 @@
 
       <DockPanel Grid.Column="2">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-          <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
-          <Button Content="Clean packs" Style="{StaticResource Button.Secondary}" Command="{Binding CleanPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
-          <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
-          <Button Content="Clear cache" Style="{StaticResource Button.Secondary}" Command="{Binding ClearCacheCommand}" Padding="16,4" Margin="0,0,12,0" />
-          <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
-          <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
-          <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
-          <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
-          <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
-          <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
-          <Button Content="Cancel" Style="{StaticResource Button.Secondary}" Command="{Binding CancelCommand}" Padding="16,4" />
+          <RadioButton Content="Packages" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowPackages}" Margin="0,0,8,0" />
+          <RadioButton Content="Log" Style="{StaticResource RadioButton.HorizontalTab}" GroupName="PublishTabs" IsChecked="{Binding ShowLog}" />
         </StackPanel>
-        <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0" LastChildFill="True">
+        <DockPanel Visibility="{Binding ShowPackages, Converter={StaticResource BoolToVis}}">
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Scan" Style="{StaticResource Button.Secondary}" Command="{Binding ScanCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="Clean packs" Style="{StaticResource Button.Secondary}" Command="{Binding CleanPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="List packs" Style="{StaticResource Button.Secondary}" Command="{Binding ListPacksCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="Clear cache" Style="{StaticResource Button.Secondary}" Command="{Binding ClearCacheCommand}" Padding="16,4" Margin="0,0,12,0" />
+            <RadioButton Content="Major" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMajor}" GroupName="Bump" />
+            <RadioButton Content="Minor" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpMinor}" GroupName="Bump" />
+            <RadioButton Content="Patch" Style="{StaticResource Radio.Bump}" IsChecked="{Binding IsBumpPatch}" GroupName="Bump" />
+            <Button Content="Make packable" Style="{StaticResource Button.Secondary}" Command="{Binding MakePackableCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="Pack" Style="{StaticResource Button.Primary}" Command="{Binding PackCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="Push" Style="{StaticResource Button.Primary}" Command="{Binding PushCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="Pack + Push" Style="{StaticResource Button.Primary}" Command="{Binding PackAndPushCommand}" Padding="16,4" Margin="0,0,8,0" />
+            <Button Content="Cancel" Style="{StaticResource Button.Secondary}" Command="{Binding CancelCommand}" Padding="16,4" />
+          </StackPanel>
+          <DataGrid ItemsSource="{Binding Projects}"
+                    SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+                    Style="{StaticResource DataGrid.Compact}"
+                    IsReadOnly="True"
+                    AutoGenerateColumns="False"
+                    CanUserAddRows="False"
+                    SelectionMode="Single"
+                    HeadersVisibility="Column">
+            <DataGrid.RowStyle>
+              <Style TargetType="DataGridRow">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsPackable}" Value="False">
+                    <Setter Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+                    <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Surface.Window}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" />
+              <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" />
+              <DataGridTextColumn Header="State" Binding="{Binding PackState}" Width="110" />
+              <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" />
+              <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" />
+              <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="280" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+        <DockPanel Visibility="{Binding ShowLog, Converter={StaticResource BoolToVis}}">
           <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-            <TextBlock Text="Session log"
-                       VerticalAlignment="Center"
-                       Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
+            <TextBlock Text="Session log" VerticalAlignment="Center" Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-              <Button Content="Copy log" Style="{StaticResource Button.Secondary}"
-                      Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
-              <Button Content="Clear log" Style="{StaticResource Button.Secondary}"
-                      Command="{Binding ClearLogCommand}" Padding="12,4" />
+              <Button Content="Copy log" Style="{StaticResource Button.Secondary}" Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
+              <Button Content="Clear log" Style="{StaticResource Button.Secondary}" Command="{Binding ClearLogCommand}" Padding="12,4" />
             </StackPanel>
           </DockPanel>
           <TextBox x:Name="SessionLog"
-                   Height="180"
                    Style="{StaticResource TextBox.Standard}"
                    Text="{Binding Log, Mode=OneWay}"
                    IsReadOnly="True"
@@ -167,22 +198,6 @@
                    Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
                    Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
         </DockPanel>
-        <DataGrid ItemsSource="{Binding Projects}"
-                  SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
-                  Style="{StaticResource DataGrid.Compact}"
-                  IsReadOnly="True"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  SelectionMode="Single"
-                  HeadersVisibility="Column">
-          <DataGrid.Columns>
-            <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" />
-            <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" />
-            <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" />
-            <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" />
-            <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="360" />
-          </DataGrid.Columns>
-        </DataGrid>
       </DockPanel>
     </Grid>
   </DockPanel>

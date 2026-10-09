@@ -34,6 +34,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<PackableProject> Projects { get; }
 
+    [ObservableProperty]
+    private bool _showPackages = true;
+
+    [ObservableProperty]
+    private bool _showLog;
+
     public string? ApiKey { get; set; }
 
     [ObservableProperty]
@@ -161,7 +167,8 @@ public sealed partial class MainViewModel : ObservableObject
             Projects.Add(project);
         if (Projects.Count > 0)
             SelectedProject = Projects[0];
-        Status = $"{SelectedRepos.Count} selected  {Projects.Count} packable";
+        var hidden = Projects.Count(item => !item.IsPackable);
+        Status = $"{SelectedRepos.Count} selected  {Projects.Count} in solution  {hidden} not packable";
         NotifyRun();
         _ = RefreshPublishedAsync();
     }
@@ -204,7 +211,28 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void MakePackable()
+    {
+        if (SelectedProject is null)
+        {
+            Status = "Select a project.";
+            return;
+        }
+
+        if (SelectedProject.IsPackable && SelectedProject.IsTool)
+        {
+            Status = SelectedProject.PackageId + " is already a tool.";
+            return;
+        }
+
+        RepoScanner.MakePackable(SelectedProject.ProjectPath);
+        LogLine("Marked packable tool " + SelectedProject.ProjectPath);
+        LoadProjects();
+    }
+
+    [RelayCommand]
     private async Task ScanAsync()
+
     {
         await RefreshReposAsync();
         LoadProjects();

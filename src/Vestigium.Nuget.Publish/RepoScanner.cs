@@ -20,6 +20,12 @@ public sealed partial class PackableProject : ObservableObject
 
     public required string LocalVersion { get; set; }
 
+    public bool IsPackable { get; init; }
+
+    public bool IsTool { get; init; }
+
+    public string PackState => IsPackable ? (IsTool ? "Tool" : "Pack") : "Not packable";
+
     [ObservableProperty]
     private string _publishedVersion = "…";
 }
@@ -79,36 +85,18 @@ public static class RepoScanner
                 continue;
 
             var name = Path.GetFileName(repo.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-            foreach (var csproj in Directory.EnumerateFiles(repo, "*.csproj", SearchOption.AllDirectories))
+            foreach (var csproj in SolutionProjects(repo))
             {
                 if (csproj.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
-                    || csproj.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
-                    || csproj.Contains($"{Path.DirectorySeparatorChar}samples{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+                    || csproj.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
                 var xml = File.ReadAllText(csproj);
-                if (PackableFalse.IsMatch(xml))
-                    continue;
-
                 var projectName = Path.GetFileNameWithoutExtension(csproj);
-                if (projectName.Contains("Tests", StringComparison.OrdinalIgnoreCase)
-                    || projectName.Contains("InventoryLab", StringComparison.OrdinalIgnoreCase)
-                    || projectName.Contains("MenuLab", StringComparison.OrdinalIgnoreCase)
-                    || projectName.Contains("ThemeLab", StringComparison.OrdinalIgnoreCase)
-                    || projectName.Contains("Documentation", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var marked = xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase)
-                    || VersionTag.IsMatch(xml)
-                    || xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase)
-                    || NuspecFileTag.IsMatch(xml);
-                if (!marked && !InheritedPackable(csproj))
-                    continue;
-
+                var packable = !PackableFalse.IsMatch(xml) && (xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase) || VersionTag.IsMatch(xml) || xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase) || NuspecFileTag.IsMatch(xml) || InheritedPackable(csproj));
+                var tool = xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase);
                 var nuspec = ReadNuspec(csproj, xml);
                 var version = nuspec.Version
                     ?? (VersionTag.Match(xml).Success ? VersionTag.Match(xml).Groups[1].Value.Trim() : null)
@@ -123,7 +111,9 @@ public static class RepoScanner
                     PackageId = nuspec.Id ?? projectName,
                     ProjectPath = csproj,
                     NuspecPath = nuspec.Path,
-                    LocalVersion = version
+                    LocalVersion = version,
+                    IsPackable = packable,
+                    IsTool = tool
                 });
             }
         }
@@ -132,6 +122,52 @@ public static class RepoScanner
             .OrderBy(r => r.RepoName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(r => r.PackageId, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static IEnumerable<string> SolutionProjects(string repo)
+    {
+        var listed = new List<string>();
+        foreach (var slnx in Directory.EnumerateFiles(repo, "*.slnx"))
+        {
+            foreach (var line in File.ReadAllLines(slnx))
+            {
+                var mark = "Project Path=\"";
+                var at = line.IndexOf(mark, StringComparison.OrdinalIgnoreCase);
+                if (at < 0)
+                    continue;
+                var start = at + mark.Length;
+                var end = line.IndexOf('"', start);
+                if (end < 0)
+                    continue;
+                var path = Path.GetFullPath(Path.Combine(repo, line[start..end].Replace('/', Path.DirectorySeparatorChar)));
+                if (File.Exists(path))
+                    listed.Add(path);
+            }
+        }
+
+        if (listed.Count > 0)
+            return listed.Distinct(StringComparer.OrdinalIgnoreCase);
+
+        return Directory.EnumerateFiles(repo, "*.csproj", SearchOption.AllDirectories);
+    }
+
+    public static void MakePackable(string csproj)
+    {
+        var xml = File.ReadAllText(csproj);
+        xml = PackableFalse.Replace(xml, "");
+        if (!xml.Contains("<IsPackable>true</IsPackable>", StringComparison.OrdinalIgnoreCase))
+            xml = InsertBeforeGroup(xml, "    <IsPackable>true</IsPackable>\n    <PackAsTool>true</PackAsTool>\n  ");
+        else if (!xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase))
+            xml = InsertBeforeGroup(xml, "    <PackAsTool>true</PackAsTool>\n  ");
+        if (!VersionTag.IsMatch(xml))
+            xml = InsertBeforeGroup(xml, "    <Version>1.0.0</Version>\n  ");
+        File.WriteAllText(csproj, xml);
+    }
+
+    private static string InsertBeforeGroup(string xml, string insertion)
+    {
+        var at = xml.IndexOf("</PropertyGroup>", StringComparison.Ordinal);
+        return at < 0 ? xml : xml[..at] + insertion + xml[at..];
     }
 
     private static bool InheritedPackable(string csproj)
