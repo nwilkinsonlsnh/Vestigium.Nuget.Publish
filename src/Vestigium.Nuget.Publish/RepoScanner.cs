@@ -97,6 +97,8 @@ public static class RepoScanner
 
                 var xml = File.ReadAllText(csproj);
                 var projectName = Path.GetFileNameWithoutExtension(csproj);
+                if (ExcludedSuffix(projectName))
+                    continue;
                 var packable = !PackableFalse.IsMatch(xml) && (xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase) || VersionTag.IsMatch(xml) || xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase) || NuspecFileTag.IsMatch(xml) || InheritedPackable(csproj));
                 var tool = xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase)
                     || xml.Contains("<BuildOutputTargetFolder>tools</BuildOutputTargetFolder>", StringComparison.OrdinalIgnoreCase)
@@ -126,6 +128,12 @@ public static class RepoScanner
             .OrderBy(r => r.RepoName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(r => r.PackageId, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static bool ExcludedSuffix(string name)
+    {
+        string[] suffixes = [".Tests", ".Test", ".Samples", ".Sample", ".Demo"];
+        return suffixes.Any(suffix => name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
     }
 
     private static IEnumerable<string> SolutionProjects(string repo)
