@@ -268,7 +268,8 @@
             <DataGrid.Columns>
               <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="160" ElementStyle="{StaticResource PackText}" />
               <DataGridTextColumn Header="Package" Binding="{Binding PackageId}" Width="*" ElementStyle="{StaticResource PackText}" />
-              <DataGridTextColumn Header="State" Binding="{Binding PackState}" Width="110" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="IsPackable" Binding="{Binding IsPackableText}" Width="110" ElementStyle="{StaticResource PackText}" />
+              <DataGridTextColumn Header="IsTool" Binding="{Binding IsToolText}" Width="90" ElementStyle="{StaticResource PackText}" />
               <DataGridTextColumn Header="NuGet" Binding="{Binding PublishedVersion}" Width="90" ElementStyle="{StaticResource PackText}" />
               <DataGridTextColumn Header="Local" Binding="{Binding LocalVersion}" Width="90" ElementStyle="{StaticResource PackText}" />
               <DataGridTextColumn Header="Path" Binding="{Binding ProjectPath}" Width="2*" MinWidth="280" ElementStyle="{StaticResource PackText}" />

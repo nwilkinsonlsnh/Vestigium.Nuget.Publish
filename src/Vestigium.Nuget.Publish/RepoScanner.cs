@@ -24,7 +24,9 @@ public sealed partial class PackableProject : ObservableObject
 
     public bool IsTool { get; init; }
 
-    public string PackState => IsPackable ? (IsTool ? "Tool" : "Pack") : "Not packable";
+    public string IsPackableText => IsPackable ? "Yes" : "No";
+
+    public string IsToolText => IsTool ? "Yes" : "No";
 
     [ObservableProperty]
     private string _publishedVersion = "…";
