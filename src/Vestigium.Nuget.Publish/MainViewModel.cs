@@ -226,7 +226,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         RepoScanner.MakePackable(SelectedProject.ProjectPath);
-        LogLine("Marked packable tool " + SelectedProject.ProjectPath);
+        Append("Marked packable tool " + SelectedProject.ProjectPath);
         LoadProjects();
     }
 
