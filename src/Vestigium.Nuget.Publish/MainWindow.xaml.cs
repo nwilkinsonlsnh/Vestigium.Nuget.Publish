@@ -34,6 +34,14 @@ public partial class MainWindow : Window
         Vm.NotifyKey();
     }
 
+    private void SessionLog_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not TextBox box)
+            return;
+        box.CaretIndex = box.Text.Length;
+        box.ScrollToEnd();
+    }
+
     private void RepoList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is not ListBox list)

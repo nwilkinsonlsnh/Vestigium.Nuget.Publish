@@ -155,13 +155,15 @@
                       Command="{Binding ClearLogCommand}" Padding="12,4" />
             </StackPanel>
           </DockPanel>
-          <TextBox Height="180"
+          <TextBox x:Name="SessionLog"
+                   Height="180"
                    Style="{StaticResource TextBox.Standard}"
                    Text="{Binding Log, Mode=OneWay}"
                    IsReadOnly="True"
                    FontFamily="Consolas"
                    VerticalScrollBarVisibility="Auto"
                    TextWrapping="Wrap"
+                   TextChanged="SessionLog_TextChanged"
                    Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
                    Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
         </DockPanel>
