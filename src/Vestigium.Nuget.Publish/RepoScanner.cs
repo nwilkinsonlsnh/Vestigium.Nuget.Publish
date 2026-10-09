@@ -227,14 +227,14 @@ public static class RepoScanner
             xml = InsertBeforeGroup(xml, "    <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>\n  ");
         var name = Path.GetFileNameWithoutExtension(csproj);
         var dir = Path.GetDirectoryName(csproj)!;
-        var build = Path.Combine(dir, "build");
-        Directory.CreateDirectory(build);
+        Directory.CreateDirectory(Path.Combine(dir, "build"));
         var pkg = name.Replace('.', '_');
-        var targets = Path.Combine(build, name + ".targets");
-        File.WriteAllText(targets, "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFiles=\"@(_ToolFiles->'$(OutputPath)%(Filename)%(Extension)')\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
-        var include = "<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\\" />";
+        var targetsPath = Path.Combine(dir, "build", name + ".targets");
+        File.WriteAllText(targetsPath, "<Project>\n  <Target Name=\"CopyVestigiumTool\" AfterTargets=\"Build\">\n    <ItemGroup>\n      <_ToolFiles Include=\"$(Pkg" + pkg + ")\\tools\\**\\*.*\" />\n    </ItemGroup>\n    <Copy SourceFiles=\"@(_ToolFiles)\" DestinationFolder=\"$(OutputPath)\" SkipUnchangedFiles=\"true\" Condition=\"'@(_ToolFiles)' != ''\" />\n  </Target>\n</Project>\n");
         if (!xml.Contains(name + ".targets", StringComparison.OrdinalIgnoreCase))
-            xml += "\n  <ItemGroup>\n    " + include + "\n  </ItemGroup>\n";
+        {
+            xml += "\n  <ItemGroup>\n    <None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\" + name + ".targets\" />\n    <None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"buildTransitive\\" + name + ".targets\" />\n  </ItemGroup>\n";
+        }
         File.WriteAllText(csproj, xml);
     }
 
