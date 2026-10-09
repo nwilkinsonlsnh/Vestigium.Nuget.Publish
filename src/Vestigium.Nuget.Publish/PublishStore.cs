@@ -12,6 +12,8 @@ public sealed class PublishSettings
     public string OutputFolder { get; set; } = "artifacts/nupkg";
 
     public string Bump { get; set; } = "Patch";
+
+    public List<string> Exclusions { get; set; } = ["Tests", "Test", "Sample", "Samples", "Demo", "Documentation"];
 }
 
 public static class PublishStore

@@ -78,7 +78,7 @@ public static class RepoScanner
             .ToArray();
     }
 
-    public static IReadOnlyList<PackableProject> ListProjects(IEnumerable<string> repos)
+    public static IReadOnlyList<PackableProject> ListProjects(IEnumerable<string> repos, IEnumerable<string>? exclusions = null)
     {
         var rows = new List<PackableProject>();
         foreach (var repo in repos)
@@ -97,7 +97,7 @@ public static class RepoScanner
 
                 var xml = File.ReadAllText(csproj);
                 var projectName = Path.GetFileNameWithoutExtension(csproj);
-                if (ExcludedSuffix(projectName))
+                if (Excluded(projectName, exclusions))
                     continue;
                 var packable = !PackableFalse.IsMatch(xml) && (xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase) || VersionTag.IsMatch(xml) || xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase) || NuspecFileTag.IsMatch(xml) || InheritedPackable(csproj));
                 var tool = xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase)
@@ -130,10 +130,28 @@ public static class RepoScanner
             .ToArray();
     }
 
-    private static bool ExcludedSuffix(string name)
+    private static bool Excluded(string name, IEnumerable<string>? exclusions)
     {
-        string[] suffixes = [".Tests", ".Test", ".Samples", ".Sample", ".Demo"];
-        return suffixes.Any(suffix => name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
+        var last = name.LastIndexOf('.');
+        var segment = last < 0 ? name : name[(last + 1)..];
+        foreach (var raw in exclusions ?? [])
+        {
+            var pattern = raw.Trim().TrimStart('.');
+            if (pattern.Length == 0)
+                continue;
+            if (pattern.StartsWith('*'))
+            {
+                var tail = pattern[1..];
+                if (tail.Length > 0 && segment.EndsWith(tail, StringComparison.OrdinalIgnoreCase))
+                    return true;
+                continue;
+            }
+
+            if (string.Equals(segment, pattern, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     private static IEnumerable<string> SolutionProjects(string repo)

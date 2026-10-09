@@ -21,6 +21,9 @@ public sealed partial class MainViewModel : ObservableObject
         Source = _settings.Source;
         OutputFolder = _settings.OutputFolder;
         Bump = ParseBump(_settings.Bump);
+        if (_settings.Exclusions.Count == 0)
+            _settings.Exclusions = ["Tests", "Test", "Sample", "Samples", "Demo", "Documentation"];
+        Exclusions = new ObservableCollection<string>(_settings.Exclusions);
         PublishStore.ClearApiKey();
         if (Roots.Count > 0)
             _ = RefreshReposAsync();
@@ -39,6 +42,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showLog;
+
+    [ObservableProperty]
+    private bool _showSettings;
+
+    [ObservableProperty]
+    private string _exclusionDraft = "";
+
+    public ObservableCollection<string> Exclusions { get; }
+
+    [ObservableProperty]
+    private string? _selectedExclusion;
 
     public string? ApiKey { get; set; }
 
@@ -163,7 +177,7 @@ public sealed partial class MainViewModel : ObservableObject
         var paths = SelectedRepos.Count > 0
             ? SelectedRepos.Select(r => r.Path)
             : [];
-        foreach (var project in RepoScanner.ListProjects(paths))
+        foreach (var project in RepoScanner.ListProjects(paths, Exclusions))
             Projects.Add(project);
         if (Projects.Count > 0)
             SelectedProject = Projects[0];
@@ -208,6 +222,30 @@ public sealed partial class MainViewModel : ObservableObject
             : Repos.Select(r => r.Path);
         DotnetCli.ListPacks(repos, OutputFolder, Append);
         Status = "Listed packs";
+    }
+
+    [RelayCommand]
+    private void AddExclusion()
+    {
+        var pattern = ExclusionDraft.Trim().TrimStart('.');
+        if (pattern.Length == 0)
+            return;
+        if (Exclusions.Any(item => string.Equals(item, pattern, StringComparison.OrdinalIgnoreCase)))
+            return;
+        Exclusions.Add(pattern);
+        ExclusionDraft = "";
+        Persist();
+        LoadProjects();
+    }
+
+    [RelayCommand]
+    private void RemoveExclusion()
+    {
+        if (SelectedExclusion is null)
+            return;
+        Exclusions.Remove(SelectedExclusion);
+        Persist();
+        LoadProjects();
     }
 
     [RelayCommand]
@@ -681,6 +719,7 @@ public sealed partial class MainViewModel : ObservableObject
         _settings.Source = Source;
         _settings.OutputFolder = OutputFolder;
         _settings.Bump = Bump.ToString();
+        _settings.Exclusions = [.. Exclusions];
         PublishStore.Save(_settings);
     }
 
