@@ -235,8 +235,11 @@
                 <MenuItem Header="Make unpackable" Style="{StaticResource PackMenuItem}" Command="{Binding MakeUnpackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource BoolToVis}}">
                   <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Make tool" Style="{StaticResource PackMenuItem}" Command="{Binding MakeToolCommand}">
+                <MenuItem Header="Make tool" Style="{StaticResource PackMenuItem}" Command="{Binding MakeToolCommand}" Visibility="{Binding SelectedProject.IsTool, Converter={StaticResource InverseBoolToVis}}">
                   <MenuItem.Icon><TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Remove tool" Style="{StaticResource PackMenuItem}" Command="{Binding RemoveToolCommand}" Visibility="{Binding SelectedProject.IsTool, Converter={StaticResource BoolToVis}}">
+                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}" /></MenuItem.Icon>
                 </MenuItem>
               </ContextMenu>
             </DataGrid.ContextMenu>

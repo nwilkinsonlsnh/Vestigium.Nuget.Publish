@@ -253,6 +253,20 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void RemoveTool()
+    {
+        if (SelectedProject is null)
+        {
+            Status = "Select a project.";
+            return;
+        }
+
+        RepoScanner.RemoveTool(SelectedProject.ProjectPath);
+        Append("Removed tool " + SelectedProject.ProjectPath);
+        LoadProjects();
+    }
+
+    [RelayCommand]
     private async Task ScanAsync()
 
     {

@@ -98,7 +98,9 @@ public static class RepoScanner
                 var xml = File.ReadAllText(csproj);
                 var projectName = Path.GetFileNameWithoutExtension(csproj);
                 var packable = !PackableFalse.IsMatch(xml) && (xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase) || VersionTag.IsMatch(xml) || xml.Contains("PackageId", StringComparison.OrdinalIgnoreCase) || NuspecFileTag.IsMatch(xml) || InheritedPackable(csproj));
-                var tool = xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase);
+                var tool = xml.Contains("<PackAsTool>true</PackAsTool>", StringComparison.OrdinalIgnoreCase)
+                    || xml.Contains("<BuildOutputTargetFolder>tools</BuildOutputTargetFolder>", StringComparison.OrdinalIgnoreCase)
+                    || xml.Contains("PackagePath=\"build", StringComparison.OrdinalIgnoreCase);
                 var nuspec = ReadNuspec(csproj, xml);
                 var version = nuspec.Version
                     ?? (VersionTag.Match(xml).Success ? VersionTag.Match(xml).Groups[1].Value.Trim() : null)
@@ -171,6 +173,16 @@ public static class RepoScanner
         xml = xml.Replace("<PackAsTool>true</PackAsTool>", "", StringComparison.OrdinalIgnoreCase);
         if (!xml.Contains("<IsPackable>", StringComparison.OrdinalIgnoreCase))
             xml = InsertBeforeGroup(xml, "    <IsPackable>false</IsPackable>\n  ");
+        File.WriteAllText(csproj, xml);
+    }
+
+    public static void RemoveTool(string csproj)
+    {
+        var xml = File.ReadAllText(csproj);
+        xml = xml.Replace("<PackAsTool>true</PackAsTool>", "", StringComparison.OrdinalIgnoreCase);
+        xml = xml.Replace("<BuildOutputTargetFolder>tools</BuildOutputTargetFolder>", "", StringComparison.OrdinalIgnoreCase);
+        var name = Path.GetFileNameWithoutExtension(csproj);
+        xml = xml.Replace("<None Include=\"build\\" + name + ".targets\" Pack=\"true\" PackagePath=\"build\\" />", "");
         File.WriteAllText(csproj, xml);
     }
 
