@@ -18,6 +18,8 @@ public sealed partial class PackableProject : ObservableObject
 
     public string? NuspecPath { get; init; }
 
+    public required string ProjectVersion { get; set; }
+
     public required string LocalVersion { get; set; }
 
     public bool IsPackable { get; init; }
@@ -120,7 +122,8 @@ public static class RepoScanner
                     PackageId = nuspec.Id ?? projectName,
                     ProjectPath = csproj,
                     NuspecPath = nuspec.Path,
-                    LocalVersion = version,
+                    ProjectVersion = version,
+                    LocalVersion = "—",
                     IsPackable = packable,
                     IsTool = tool
                 });

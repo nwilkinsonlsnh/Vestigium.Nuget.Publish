@@ -195,12 +195,14 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 var published = await NugetCatalog.LatestAsync(project.PackageId, Source, CancellationToken.None);
                 project.PublishedVersion = string.IsNullOrWhiteSpace(published) ? "none" : published;
-                project.IsListed = await ListedStateAsync(project, published, CancellationToken.None);
+                project.LocalVersion = PackedVersion(project);
+                project.IsListed = ListedState(project);
             }
             catch (Exception ex)
             {
                 project.PublishedVersion = "none";
-                project.IsListed = "Pending";
+                project.LocalVersion = PackedVersion(project);
+                project.IsListed = ListedState(project);
                 Append($"{project.PackageId} nuget lookup failed  {ex.Message}");
             }
         }
@@ -463,14 +465,40 @@ public sealed partial class MainViewModel : ObservableObject
         return null;
     }
 
-    private async Task<string> ListedStateAsync(PackableProject project, string? published, CancellationToken token)
+    private string ListedState(PackableProject project)
     {
-        if (_pushed.TryGetValue(project.PackageId, out var pushed)
-            && !string.Equals(pushed, published, StringComparison.OrdinalIgnoreCase))
-            return "Pending";
-        if (string.IsNullOrWhiteSpace(published))
-            return "No";
-        return await NugetCatalog.ListedAsync(project.PackageId, Source, token);
+        var packed = project.LocalVersion;
+        var hasPack = !string.IsNullOrWhiteSpace(packed) && packed != "—";
+        var published = project.PublishedVersion;
+        var onFeed = !string.IsNullOrWhiteSpace(published) && published != "none" && published != "…";
+        if (!hasPack)
+            return onFeed ? "Yes" : "No";
+        return string.Equals(packed, published, StringComparison.OrdinalIgnoreCase) ? "Yes" : "Pending";
+    }
+
+    private string PackedVersion(PackableProject project)
+    {
+        var output = Path.IsPathRooted(OutputFolder)
+            ? OutputFolder
+            : Path.Combine(project.RepoPath, OutputFolder);
+        if (!Directory.Exists(output))
+            return "—";
+        System.Version? best = null;
+        var text = "";
+        foreach (var file in Directory.EnumerateFiles(output, project.PackageId + ".*.nupkg"))
+        {
+            var name = Path.GetFileNameWithoutExtension(file);
+            var version = name[(project.PackageId.Length + 1)..];
+            if (!System.Version.TryParse(Normalize(version), out var parsed))
+                continue;
+            if (best is null || parsed > best)
+            {
+                best = parsed;
+                text = version;
+            }
+        }
+
+        return string.IsNullOrWhiteSpace(text) ? "—" : text;
     }
 
     private string? Remembered(string packageId) =>
@@ -587,10 +615,10 @@ public sealed partial class MainViewModel : ObservableObject
             if (pack && Bump != VersionBump.Keep)
             {
                 var basis = await BasisAsync(project, token);
-                var floor = basis ?? project.LocalVersion;
+                var floor = basis ?? project.ProjectVersion;
                 if (basis is null)
                 {
-                    Append($"pack {project.PackageId} {project.LocalVersion}  first publish");
+                    Append($"pack {project.PackageId} {project.ProjectVersion}  first publish");
                 }
                 else
                 {
@@ -618,13 +646,14 @@ public sealed partial class MainViewModel : ObservableObject
                         return;
                     }
 
-                    project.LocalVersion = next;
+                    project.ProjectVersion = next;
+                    project.LocalVersion = PackedVersion(project);
                     SelectedProject = project;
                 }
             }
             else if (pack)
             {
-                Append($"pack {project.PackageId} {project.LocalVersion}  no bump");
+                Append($"pack {project.PackageId} {project.ProjectVersion}  no bump");
             }
 
             if (pack)
