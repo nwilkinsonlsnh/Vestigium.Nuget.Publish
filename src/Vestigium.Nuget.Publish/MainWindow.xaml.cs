@@ -46,8 +46,8 @@ public partial class MainWindow : Window
         var window = new Window
         {
             Title = "Key name",
-            Width = 360,
-            Height = 168,
+            Width = 480,
+            Height = 180,
             ResizeMode = ResizeMode.NoResize,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Owner = this,
@@ -58,7 +58,7 @@ public partial class MainWindow : Window
         {
             Style = (Style)FindResource("TextBox.Standard"),
             Margin = new Thickness(16, 8, 16, 0),
-            MinWidth = 280
+            MinWidth = 420
         };
         var label = new TextBlock
         {
