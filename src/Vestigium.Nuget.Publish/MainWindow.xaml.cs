@@ -71,14 +71,14 @@ public partial class MainWindow : Window
             Content = "Save",
             Style = (Style)FindResource("Button.Primary"),
             Margin = new Thickness(0, 0, 8, 0),
-            Padding = new Thickness(16, 4),
+            Padding = new Thickness(16, 4, 16, 4),
             IsDefault = true
         };
         var cancel = new Button
         {
             Content = "Cancel",
             Style = (Style)FindResource("Button.Secondary"),
-            Padding = new Thickness(16, 4),
+            Padding = new Thickness(16, 4, 16, 4),
             IsCancel = true
         };
         var buttons = new StackPanel
