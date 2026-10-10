@@ -763,6 +763,8 @@ public sealed partial class MainViewModel : ObservableObject
         Status = "Running";
         var token = Token();
         var project = SelectedProject;
+        string[]? bumpedFiles = null;
+        var bumpedMessage = "";
         try
         {
             var git = await GitSync.EnsureCurrentAsync(project.RepoPath, Append, token);
@@ -791,24 +793,12 @@ public sealed partial class MainViewModel : ObservableObject
                     }
 
                     Append($"{project.PackageId} nuget {previous} → {next}");
-                    var files = string.IsNullOrWhiteSpace(project.NuspecPath)
+                    project.ProjectVersion = next;
+                    SelectedProject = project;
+                    bumpedFiles = string.IsNullOrWhiteSpace(project.NuspecPath)
                         ? new[] { project.ProjectPath }
                         : new[] { project.ProjectPath, project.NuspecPath };
-                    var commit = await GitSync.CommitAndPushAsync(
-                        project.RepoPath,
-                        files,
-                        $"chore: bump {project.PackageId} to {next}",
-                        Append,
-                        token);
-                    if (commit != 0)
-                    {
-                        Status = "Version commit failed";
-                        return;
-                    }
-
-                    project.ProjectVersion = next;
-                    project.LocalVersion = PackedVersion(project);
-                    SelectedProject = project;
+                    bumpedMessage = $"chore: bump {project.PackageId} to {next}";
                 }
             }
             else if (pack)
@@ -855,8 +845,26 @@ public sealed partial class MainViewModel : ObservableObject
                 var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token, extraSource);
                 if (packed != 0)
                 {
-                    Status = $"Pack failed  {packed}";
+                    if (bumpedFiles is not null)
+                        await GitSync.RestoreAsync(project.RepoPath, bumpedFiles, Append, token);
+                    Status = "Pack failed. Version was not committed.";
+                    Append("pack failed. The version bump was put back.");
                     return;
+                }
+
+                if (bumpedFiles is not null)
+                {
+                    var commit = await GitSync.CommitAndPushAsync(
+                        project.RepoPath,
+                        bumpedFiles,
+                        bumpedMessage,
+                        Append,
+                        token);
+                    if (commit != 0)
+                    {
+                        Status = "Packed, but the version commit failed";
+                        return;
+                    }
                 }
             }
 
