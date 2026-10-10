@@ -19,7 +19,7 @@ public static class GitSync
         if (fetch != 0)
             return fetch;
 
-        var pull = await RunAsync("git", "pull --ff-only", repoPath, log, token);
+        var pull = await PullSafelyAsync(repoPath, log, token);
         if (pull != 0)
             return pull;
 
@@ -49,14 +49,7 @@ public static class GitSync
         if (fetch != 0)
             return fetch;
 
-        var porcelain = await ReadAsync("git", "status --porcelain", repoPath, token);
-        if (!string.IsNullOrWhiteSpace(porcelain))
-        {
-            log("local changes stay in the pack");
-            log(porcelain.Trim());
-        }
-
-        var synced = await RunAsync("git", "pull --ff-only", repoPath, log, token);
+        var synced = await PullSafelyAsync(repoPath, log, token);
         if (synced != 0)
             return synced;
 
@@ -74,7 +67,7 @@ public static class GitSync
         if (behind > 0)
         {
             log($"behind {behind} — pull --ff-only");
-            var pull = await RunAsync("git", "pull --ff-only", repoPath, log, token);
+            var pull = await PullSafelyAsync(repoPath, log, token);
             if (pull != 0)
                 return pull;
         }
