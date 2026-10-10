@@ -251,6 +251,32 @@
                     HeadersVisibility="Column">
             <DataGrid.ContextMenu>
               <ContextMenu Style="{StaticResource PackMenu}" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                <MenuItem Header="Pack" Style="{StaticResource PackMenuItem}" Command="{Binding PackCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE7B8;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Push" Style="{StaticResource PackMenuItem}" Command="{Binding PushCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Pack + Push" Style="{StaticResource PackMenuItem}" Command="{Binding PackAndPushCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Version" Style="{StaticResource PackMenuItem}">
+                  <MenuItem.Icon><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                  <MenuItem Header="Major" Style="{StaticResource PackMenuItem}" Command="{Binding BumpMajorCommand}" />
+                  <MenuItem Header="Minor" Style="{StaticResource PackMenuItem}" Command="{Binding BumpMinorCommand}" />
+                  <MenuItem Header="Patch" Style="{StaticResource PackMenuItem}" Command="{Binding BumpPatchCommand}" />
+                </MenuItem>
+                <Separator Style="{StaticResource PackSeparator}" />
+                <MenuItem Header="View session log" Style="{StaticResource PackMenuItem}" Command="{Binding ViewLogCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE7C3;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="List packs" Style="{StaticResource PackMenuItem}" Command="{Binding ListPacksCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Clear log" Style="{StaticResource PackMenuItem}" Command="{Binding ClearLogCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>

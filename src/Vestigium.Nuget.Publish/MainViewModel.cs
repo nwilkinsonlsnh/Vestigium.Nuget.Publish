@@ -274,6 +274,7 @@ public sealed partial class MainViewModel : ObservableObject
             : Repos.Select(r => r.Path);
         DotnetCli.ListPacks(repos, OutputFolder, Append);
         Status = "Listed packs";
+        OpenLog();
     }
 
     [RelayCommand]
@@ -428,13 +429,44 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
-    private Task PackAsync() => RunAsync(push: false);
+    private Task PackAsync()
+    {
+        OpenLog();
+        return RunAsync(push: false);
+    }
 
     [RelayCommand(CanExecute = nameof(CanPush))]
-    private Task PushAsync() => RunAsync(push: true, pack: false);
+    private Task PushAsync()
+    {
+        OpenLog();
+        return RunAsync(push: true, pack: false);
+    }
 
     [RelayCommand(CanExecute = nameof(CanPush))]
-    private Task PackAndPushAsync() => RunAsync(push: true, pack: true);
+    private Task PackAndPushAsync()
+    {
+        OpenLog();
+        return RunAsync(push: true, pack: true);
+    }
+
+    [RelayCommand]
+    private void ViewLog() => OpenLog();
+
+    [RelayCommand]
+    private void BumpMajor() => Bump = VersionBump.Major;
+
+    [RelayCommand]
+    private void BumpMinor() => Bump = VersionBump.Minor;
+
+    [RelayCommand]
+    private void BumpPatch() => Bump = VersionBump.Patch;
+
+    private void OpenLog()
+    {
+        ShowPackages = false;
+        ShowSettings = false;
+        ShowLog = true;
+    }
 
     [RelayCommand]
     private void CopyLog()
