@@ -49,6 +49,9 @@
                     <ColumnDefinition Width="28" />
                     <ColumnDefinition Width="*" />
                   </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="Check" Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Foreground="{TemplateBinding Foreground}" Visibility="Collapsed" />
                   <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" HorizontalAlignment="Center" />
                   <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="8,0,12,0"
                                     TextElement.Foreground="{TemplateBinding Foreground}" />
@@ -58,6 +61,9 @@
                 <Trigger Property="IsHighlighted" Value="True">
                   <Setter TargetName="Row" Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
                   <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Surface.Window}" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                  <Setter TargetName="Check" Property="Visibility" Value="Visible" />
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -299,9 +305,9 @@
                 </MenuItem>
                 <MenuItem Header="Version" Style="{StaticResource PackSubmenu}">
                   <MenuItem.Icon><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
-                  <MenuItem Header="Major" Style="{StaticResource PackMenuItem}" Command="{Binding BumpMajorCommand}" />
-                  <MenuItem Header="Minor" Style="{StaticResource PackMenuItem}" Command="{Binding BumpMinorCommand}" />
-                  <MenuItem Header="Patch" Style="{StaticResource PackMenuItem}" Command="{Binding BumpPatchCommand}" />
+                  <MenuItem Header="Major" Style="{StaticResource PackMenuItem}" IsCheckable="True" IsChecked="{Binding IsBumpMajor, Mode=OneWay}" Command="{Binding BumpMajorCommand}" />
+                  <MenuItem Header="Minor" Style="{StaticResource PackMenuItem}" IsCheckable="True" IsChecked="{Binding IsBumpMinor, Mode=OneWay}" Command="{Binding BumpMinorCommand}" />
+                  <MenuItem Header="Patch" Style="{StaticResource PackMenuItem}" IsCheckable="True" IsChecked="{Binding IsBumpPatch, Mode=OneWay}" Command="{Binding BumpPatchCommand}" />
                 </MenuItem>
                 <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="View session log" Style="{StaticResource PackMenuItem}" Command="{Binding ViewLogCommand}">
