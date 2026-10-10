@@ -149,27 +149,51 @@ public sealed partial class MainViewModel : ObservableObject
         _ = RefreshReposAsync();
     }
 
-    public void SaveKey(string? key)
-    {
-        ApiKey = string.IsNullOrWhiteSpace(key) ? null : key.Trim();
-        if (ApiKey is null)
-            return;
-        PublishStore.SaveApiKey(_settings, Source, ApiKey);
-    }
+    public const string NewKey = "New key";
 
-    public void ForgetKey()
+    public ObservableCollection<string> KeyNames { get; } = [];
+
+    [ObservableProperty]
+    private string _selectedKeyName = NewKey;
+
+    partial void OnSelectedKeyNameChanged(string value)
     {
-        ApiKey = null;
-        PublishStore.ForgetApiKey(_settings, Source);
+        _settings.SelectedKeyName = value;
+        Persist();
+        ApiKey = value == NewKey ? null : PublishStore.LoadApiKey(_settings, value);
         KeyChanged?.Invoke();
     }
 
-    public void LoadKey()
+    public void RememberTypedKey(string? key) => ApiKey = string.IsNullOrWhiteSpace(key) ? null : key.Trim();
+
+    public bool SaveNamed(string? name, string? key)
     {
+        var chosen = string.IsNullOrWhiteSpace(name) || name == NewKey ? SelectedKeyName : name.Trim();
+        if (string.IsNullOrWhiteSpace(chosen) || chosen == NewKey || string.IsNullOrWhiteSpace(key))
+            return false;
+        PublishStore.SaveApiKey(_settings, chosen, key);
         ReloadKeyNames();
-        SelectedKeyName = _settings.SelectedKeyName;
-        ApiKey = PublishStore.LoadApiKey(_settings, SelectedKeyName);
+        SelectedKeyName = chosen;
+        ApiKey = key.Trim();
         KeyChanged?.Invoke();
+        return true;
+    }
+
+    public void ForgetSelected()
+    {
+        if (SelectedKeyName == NewKey)
+            return;
+        PublishStore.ForgetApiKey(_settings, SelectedKeyName);
+        ReloadKeyNames();
+        SelectedKeyName = NewKey;
+    }
+
+    private void ReloadKeyNames()
+    {
+        KeyNames.Clear();
+        KeyNames.Add(NewKey);
+        foreach (var name in PublishStore.KeyNames(_settings))
+            KeyNames.Add(name);
     }
 
     public event Action? KeyChanged;
