@@ -24,7 +24,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (_settings.Exclusions.Count == 0)
             _settings.Exclusions = ["Tests", "Test", "Sample", "Samples", "Demo", "Documentation"];
         Exclusions = new ObservableCollection<string>(_settings.Exclusions);
-        ApiKey = PublishStore.LoadApiKey(_settings, Source);
+        ReloadKeyNames();
+        SelectedKeyName = _settings.SelectedKeyName;
+        ApiKey = PublishStore.LoadApiKey(_settings, SelectedKeyName);
         if (Roots.Count > 0)
             _ = RefreshReposAsync();
     }
@@ -115,11 +117,7 @@ public sealed partial class MainViewModel : ObservableObject
         Persist();
     }
 
-    partial void OnSourceChanged(string value)
-    {
-        Persist();
-        LoadKey();
-    }
+    partial void OnSourceChanged(string value) => Persist();
 
     partial void OnOutputFolderChanged(string value) => Persist();
 
@@ -168,7 +166,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void LoadKey()
     {
-        ApiKey = PublishStore.LoadApiKey(_settings, Source);
+        ReloadKeyNames();
+        SelectedKeyName = _settings.SelectedKeyName;
+        ApiKey = PublishStore.LoadApiKey(_settings, SelectedKeyName);
         KeyChanged?.Invoke();
     }
 

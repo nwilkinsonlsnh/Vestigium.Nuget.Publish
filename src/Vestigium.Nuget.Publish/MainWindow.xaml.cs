@@ -26,6 +26,47 @@ public partial class MainWindow : Window
         Vm.NotifyKey();
     }
 
+    private void SaveKey_Click(object sender, RoutedEventArgs e)
+    {
+        var name = Vm.SelectedKeyName;
+        if (name == MainViewModel.NewKey)
+        {
+            name = AskName();
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+        }
+
+        Vm.SaveNamed(name, KeyBox.Password);
+    }
+
+    private void DeleteKey_Click(object sender, RoutedEventArgs e) => Vm.ForgetSelected();
+
+    private string? AskName()
+    {
+        var box = new TextBox { Margin = new Thickness(12), MinWidth = 240 };
+        var window = new Window
+        {
+            Title = "Key name",
+            Width = 320,
+            Height = 140,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = this,
+            Content = new DockPanel()
+        };
+        var save = new Button { Content = "Save", Margin = new Thickness(12), HorizontalAlignment = HorizontalAlignment.Right, IsDefault = true };
+        var panel = (DockPanel)window.Content;
+        DockPanel.SetDock(save, Dock.Bottom);
+        panel.Children.Add(save);
+        panel.Children.Add(box);
+        string? name = null;
+        save.Click += (_, _) =>
+        {
+            name = box.Text.Trim();
+            window.DialogResult = true;
+        };
+        return window.ShowDialog() == true ? name : null;
+    }
+
     private void AddRoot_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog { Title = "Repo root" };
@@ -39,7 +80,7 @@ public partial class MainWindow : Window
     {
         if (_applying)
             return;
-        Vm.SaveKey(KeyBox.Password);
+        Vm.RememberTypedKey(KeyBox.Password);
         Vm.NotifyKey();
     }
 

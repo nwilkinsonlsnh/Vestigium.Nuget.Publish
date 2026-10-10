@@ -133,17 +133,29 @@
     <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="160" />
         <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="280" />
       </Grid.ColumnDefinitions>
       <Label Content="API key" Style="{StaticResource Label.Standard}" VerticalAlignment="Center" />
-      <PasswordBox x:Name="KeyBox" Grid.Column="1" Margin="8,0,8,0" Height="28"
+      <ComboBox Grid.Column="1" Style="{StaticResource ComboBox.Standard}"
+                ItemsSource="{Binding KeyNames}" SelectedItem="{Binding SelectedKeyName}"
+                Margin="8,0,8,0" Height="28" />
+      <PasswordBox x:Name="KeyBox" Grid.Column="2" Margin="0,0,8,0" Height="28"
                    PasswordChanged="KeyBox_PasswordChanged"
                    Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
                    Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    CaretBrush="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
-      <TextBox Grid.Column="2" Style="{StaticResource TextBox.Standard}"
+      <Button Grid.Column="3" Style="{StaticResource Button.Standard}" Width="32" Height="28" Margin="0,0,8,0" ToolTip="Save key" Click="SaveKey_Click">
+        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+      </Button>
+      <Button Grid.Column="4" Style="{StaticResource Button.Standard}" Width="32" Height="28" Margin="0,0,8,0" ToolTip="Delete key" Click="DeleteKey_Click">
+        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+      </Button>
+      <TextBox Grid.Column="5" Style="{StaticResource TextBox.Standard}"
                Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"
                ToolTip="NuGet source"
                Background="{DynamicResource Vestigium.Brushes.Surface.Card}"

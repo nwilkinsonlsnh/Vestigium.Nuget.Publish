@@ -7,7 +7,7 @@ namespace Vestigium.Nuget.Publish;
 
 public sealed class StoredKey
 {
-    public string Source { get; set; } = "";
+    public string Name { get; set; } = "";
 
     public string Cipher { get; set; } = "";
 }
@@ -25,6 +25,8 @@ public sealed class PublishSettings
     public List<string> Exclusions { get; set; } = ["Tests", "Test", "Sample", "Samples", "Demo", "Documentation"];
 
     public List<StoredKey> Keys { get; set; } = [];
+
+    public string SelectedKeyName { get; set; } = "New key";
 }
 
 public static class PublishStore
@@ -57,24 +59,29 @@ public static class PublishStore
         File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, Json));
     }
 
-    public static void SaveApiKey(PublishSettings settings, string source, string key)
+    public static IReadOnlyList<string> KeyNames(PublishSettings settings)
+        => settings.Keys.Select(item => item.Name).Where(name => name.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    public static void SaveApiKey(PublishSettings settings, string name, string key)
     {
+        var trimmedName = name.Trim();
         var trimmed = key.Trim();
-        if (trimmed.Length == 0 || string.IsNullOrWhiteSpace(source))
+        if (trimmedName.Length == 0 || trimmedName.Equals("New key", StringComparison.OrdinalIgnoreCase) || trimmed.Length == 0)
             return;
         var secret = ProtectedData.Protect(Encoding.UTF8.GetBytes(trimmed), null, DataProtectionScope.CurrentUser);
         var cipher = Convert.ToBase64String(secret);
-        var row = settings.Keys.FirstOrDefault(item => item.Source.Equals(source, StringComparison.OrdinalIgnoreCase));
+        var row = settings.Keys.FirstOrDefault(item => item.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase));
         if (row is null)
-            settings.Keys.Add(new StoredKey { Source = source, Cipher = cipher });
+            settings.Keys.Add(new StoredKey { Name = trimmedName, Cipher = cipher });
         else
             row.Cipher = cipher;
+        settings.SelectedKeyName = trimmedName;
         Save(settings);
     }
 
-    public static string? LoadApiKey(PublishSettings settings, string source)
+    public static string? LoadApiKey(PublishSettings settings, string name)
     {
-        var row = settings.Keys.FirstOrDefault(item => item.Source.Equals(source, StringComparison.OrdinalIgnoreCase));
+        var row = settings.Keys.FirstOrDefault(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (row is null || string.IsNullOrWhiteSpace(row.Cipher))
             return null;
         try
@@ -89,9 +96,10 @@ public static class PublishStore
         }
     }
 
-    public static void ForgetApiKey(PublishSettings settings, string source)
+    public static void ForgetApiKey(PublishSettings settings, string name)
     {
-        settings.Keys.RemoveAll(item => item.Source.Equals(source, StringComparison.OrdinalIgnoreCase));
+        settings.Keys.RemoveAll(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        settings.SelectedKeyName = "New key";
         Save(settings);
     }
 }
