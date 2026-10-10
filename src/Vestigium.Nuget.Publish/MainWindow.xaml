@@ -49,10 +49,10 @@
                     <ColumnDefinition Width="28" />
                     <ColumnDefinition Width="*" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock x:Name="Check" Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"
-                             Foreground="{TemplateBinding Foreground}" Visibility="Collapsed" />
                   <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                  <TextBlock x:Name="Check" Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="2"
+                             Foreground="{TemplateBinding Foreground}" Visibility="Collapsed" />
                   <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="8,0,12,0"
                                     TextElement.Foreground="{TemplateBinding Foreground}" />
                 </Grid>
@@ -90,9 +90,11 @@
                   </Grid>
                 </Border>
                 <Popup IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Right"
-                       AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                       AllowsTransparency="True" Focusable="False" PopupAnimation="Fade"
+                       DataContext="{Binding DataContext, RelativeSource={RelativeSource TemplatedParent}}">
                   <Border Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
-                          BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" BorderThickness="1" Padding="0">
+                          BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" BorderThickness="1" Padding="0"
+                          DataContext="{Binding}">
                     <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
                   </Border>
                 </Popup>
@@ -315,6 +317,9 @@
                 </MenuItem>
                 <MenuItem Header="List packs" Style="{StaticResource PackMenuItem}" Command="{Binding ListPacksCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Show inventory" Style="{StaticResource PackMenuItem}" Command="{Binding ShowInventoryCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Clear log" Style="{StaticResource PackMenuItem}" Command="{Binding ClearLogCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>

@@ -121,7 +121,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnOutputFolderChanged(string value) => Persist();
 
-    partial void OnSelectedProjectChanged(PackableProject? value) => NotifyRun();
+    partial void OnSelectedProjectChanged(PackableProject? value)
+    {
+        NotifyRun();
+        ShowInventoryCommand.NotifyCanExecuteChanged();
+    }
+
 
     partial void OnSelectedRepoChanged(RepoRow? value)
     {
@@ -451,6 +456,31 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ViewLog() => OpenLog();
+
+    private bool CanShowInventory() =>
+        SelectedProject is not null && System.Version.TryParse(Normalize(SelectedProject.LocalVersion), out _);
+
+    [RelayCommand(CanExecute = nameof(CanShowInventory))]
+    private void ShowInventory()
+    {
+        if (SelectedProject is null)
+            return;
+        var output = Path.IsPathRooted(OutputFolder) ? OutputFolder : Path.Combine(SelectedProject.RepoPath, OutputFolder);
+        var nupkg = Directory.Exists(output)
+            ? Directory.EnumerateFiles(output, SelectedProject.PackageId + "." + SelectedProject.LocalVersion + ".nupkg").FirstOrDefault()
+            : null;
+        OpenLog();
+        if (nupkg is null)
+        {
+            Append($"no packed file for {SelectedProject.PackageId} {SelectedProject.LocalVersion}");
+            return;
+        }
+
+        Append($"inventory {Path.GetFileName(nupkg)}");
+        using var zip = System.IO.Compression.ZipFile.OpenRead(nupkg);
+        foreach (var entry in zip.Entries.OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase))
+            Append("  " + entry.FullName);
+    }
 
     [RelayCommand]
     private void BumpMajor() => Bump = VersionBump.Major;
