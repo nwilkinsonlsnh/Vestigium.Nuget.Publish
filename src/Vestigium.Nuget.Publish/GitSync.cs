@@ -145,15 +145,49 @@ public static class GitSync
 
         if (!stashed)
             return 0;
-        var pop = await RunAsync("git", "stash pop", repoPath, log, token);
-        if (pop != 0)
+        var pop = await RunTextAsync("git", "stash pop", repoPath, log, token);
+        if (pop.Code == 0)
         {
-            log("local changes conflict with the pull — pack stopped");
-            return pop;
+            log("local changes restored");
+            return 0;
         }
 
-        log("local changes restored");
-        return 0;
+        var detail = pop.Text;
+        var alreadyThere = detail.Contains("already exists, no checkout", StringComparison.OrdinalIgnoreCase)
+            || detail.Contains("could not restore untracked files", StringComparison.OrdinalIgnoreCase);
+        if (alreadyThere)
+        {
+            log("pulled files kept — the local stub was already on the remote");
+            await RunAsync("git", "stash drop", repoPath, log, token);
+            return 0;
+        }
+
+        log("local changes conflict with the pull — pack stopped");
+        return pop.Code;
+
+    }
+
+    private static async Task<(int Code, string Text)> RunTextAsync(string file, string args, string work, Action<string> log, CancellationToken token)
+    {
+        var start = new ProcessStartInfo
+        {
+            FileName = file,
+            Arguments = args,
+            WorkingDirectory = work,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+        using var process = new Process { StartInfo = start };
+        process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync(token);
+        var error = await process.StandardError.ReadToEndAsync(token);
+        await process.WaitForExitAsync(token);
+        var text = (output + error).Trim();
+        if (text.Length > 0)
+            log(text);
+        return (process.ExitCode, text);
     }
 
     private static async Task<int> RunAsync(string file, string args, string work, Action<string> log, CancellationToken token)
