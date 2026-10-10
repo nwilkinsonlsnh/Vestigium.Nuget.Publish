@@ -20,10 +20,10 @@ public sealed partial class MainViewModel : ObservableObject
         Projects = [];
         Source = _settings.Source;
         OutputFolder = _settings.OutputFolder;
-        Bump = ParseBump(_settings.Bump);
-        if (_settings.Exclusions.Count == 0)
+        if (_settings.Exclusions is null || _settings.Exclusions.Count == 0)
             _settings.Exclusions = ["Tests", "Test", "Sample", "Samples", "Demo", "Documentation"];
         Exclusions = new ObservableCollection<string>(_settings.Exclusions);
+        Bump = ParseBump(_settings.Bump);
         ReloadKeyNames();
         SelectedKeyName = _settings.SelectedKeyName;
         ApiKey = PublishStore.LoadApiKey(_settings, SelectedKeyName);
@@ -890,11 +890,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void Persist()
     {
-        _settings.Roots = [.. Roots];
+        _settings.Roots = Roots is null ? [] : [.. Roots];
         _settings.Source = Source;
         _settings.OutputFolder = OutputFolder;
         _settings.Bump = Bump.ToString();
-        _settings.Exclusions = [.. Exclusions];
+        _settings.Exclusions = Exclusions is null ? [] : [.. Exclusions];
         PublishStore.Save(_settings);
     }
 
