@@ -104,7 +104,7 @@ public static class DotnetCli
         var restore = await RunAsync("dotnet", $"restore \"{project.ProjectPath}\"{sources}", repo, log, token);
         if (restore != 0)
             return restore;
-        log($"pack {project.PackageId} {project.LocalVersion}");
+        log($"pack {project.PackageId} {project.ProjectVersion}");
         return await RunAsync(
             "dotnet",
             $"pack \"{project.ProjectPath}\" -c Release -o \"{output}\"{sources}",
