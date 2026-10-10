@@ -477,9 +477,19 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Append($"inventory {Path.GetFileName(nupkg)}");
-        using var zip = System.IO.Compression.ZipFile.OpenRead(nupkg);
-        foreach (var entry in zip.Entries.OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase))
-            Append("  " + entry.FullName);
+        var hasExe = false;
+        using (var zip = System.IO.Compression.ZipFile.OpenRead(nupkg))
+        {
+            foreach (var entry in zip.Entries.OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase))
+            {
+                if (entry.FullName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    hasExe = true;
+                Append("  " + entry.FullName);
+            }
+        }
+
+        if (SelectedProject.IsTool)
+            Append(hasExe ? "Success" : "Failure");
     }
 
     [RelayCommand]

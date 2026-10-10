@@ -154,19 +154,34 @@ public partial class MainWindow : Window
     {
         var doc = SessionLog.Document;
         doc.Blocks.Clear();
-        var blue = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Accent.Primary");
-        var ink = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary");
         foreach (var line in (Vm.Log ?? "").Split(Environment.NewLine))
         {
-            var run = new Run(line)
-            {
-                Foreground = line.Contains(".exe", StringComparison.OrdinalIgnoreCase) ? blue : ink
-            };
+            var run = new Run(line) { Foreground = LineBrush(line) };
             doc.Blocks.Add(new Paragraph(run) { Margin = new Thickness(0) });
         }
 
         SessionLog.ScrollToEnd();
     }
+
+    private System.Windows.Media.Brush LineBrush(string line)
+    {
+        var ink = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary");
+        var lower = line.Trim().ToLowerInvariant();
+        if (lower == "success")
+            return BrushOr("Vestigium.Brushes.Status.Success", System.Windows.Media.Brushes.LimeGreen);
+        if (lower is "failure" || lower.Contains("error") || lower.Contains("failed"))
+            return BrushOr("Vestigium.Brushes.Status.Error", System.Windows.Media.Brushes.IndianRed);
+        if (line.Contains(".exe", StringComparison.OrdinalIgnoreCase))
+            return (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Accent.Primary");
+        if (lower.StartsWith("push") || lower.Contains(" pushing "))
+            return BrushOr("Vestigium.Brushes.Status.Warning", System.Windows.Media.Brushes.Goldenrod);
+        if (lower.StartsWith("pack") || lower.Contains("packing "))
+            return BrushOr("Vestigium.Brushes.Accent.Secondary", (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Accent.Primary"));
+        return ink;
+    }
+
+    private System.Windows.Media.Brush BrushOr(string key, System.Windows.Media.Brush fallback)
+        => TryFindResource(key) as System.Windows.Media.Brush ?? fallback;
 
     private void RepoList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
