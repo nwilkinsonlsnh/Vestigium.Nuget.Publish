@@ -477,20 +477,10 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Append($"inventory {Path.GetFileName(nupkg)}");
-        var names = new List<string>();
-        using (var zip = System.IO.Compression.ZipFile.OpenRead(nupkg))
-        {
-            foreach (var entry in zip.Entries.OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase))
-            {
-                names.Add(entry.FullName);
-                Append("  " + entry.FullName);
-            }
-        }
-
-        InventoryReady?.Invoke(Path.GetFileName(nupkg), names);
+        using var zip = System.IO.Compression.ZipFile.OpenRead(nupkg);
+        foreach (var entry in zip.Entries.OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase))
+            Append("  " + entry.FullName);
     }
-
-    public event Action<string, IReadOnlyList<string>>? InventoryReady;
 
     [RelayCommand]
     private void BumpMajor() => Bump = VersionBump.Major;
