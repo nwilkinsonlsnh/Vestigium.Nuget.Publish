@@ -915,7 +915,11 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         if (!xml.Contains("Include=\"README.md\"", StringComparison.OrdinalIgnoreCase))
-            xml += Environment.NewLine + "  <ItemGroup>" + Environment.NewLine + "    <None Include=\"README.md\" Pack=\"true\" PackagePath=\"\\\" />" + Environment.NewLine + "  </ItemGroup>" + Environment.NewLine;
+        {
+            var end = xml.LastIndexOf("</Project>", StringComparison.Ordinal);
+            var include = "  <ItemGroup>" + Environment.NewLine + "    <None Include=\"README.md\" Pack=\"true\" PackagePath=\"\\\" />" + Environment.NewLine + "  </ItemGroup>" + Environment.NewLine;
+            xml = end < 0 ? xml + include : xml.Insert(end, include);
+        }
         File.WriteAllText(project.ProjectPath, xml);
         Append("readme stub README.md");
     }
