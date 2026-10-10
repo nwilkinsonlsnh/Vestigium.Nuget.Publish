@@ -903,14 +903,17 @@ public sealed partial class MainViewModel : ObservableObject
     private void EnsureReadme(PackableProject project)
     {
         var dir = Path.GetDirectoryName(project.ProjectPath)!;
-        var names = new[] { "README.md", "Readme.md", "readme.md", "README.txt", "Readme.txt" };
-        if (names.Any(name => File.Exists(Path.Combine(dir, name))))
+        if (File.Exists(Path.Combine(dir, "README.md")))
             return;
-        var stub = Path.Combine(dir, "README.md");
-        File.WriteAllText(stub, "# " + project.PackageId + Environment.NewLine);
+        File.WriteAllText(Path.Combine(dir, "README.md"), "# " + project.PackageId + Environment.NewLine + Environment.NewLine + "Packaged by Vestigium.Nuget.Publish." + Environment.NewLine);
         var xml = File.ReadAllText(project.ProjectPath);
         if (!xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase))
-            xml = xml.Replace("</PropertyGroup>", "    <PackageReadmeFile>README.md</PackageReadmeFile>" + Environment.NewLine + "  </PropertyGroup>", 1);
+        {
+            var close = xml.IndexOf("</PropertyGroup>", StringComparison.Ordinal);
+            if (close >= 0)
+                xml = xml.Insert(close, "    <PackageReadmeFile>README.md</PackageReadmeFile>" + Environment.NewLine + "  ");
+        }
+
         if (!xml.Contains("README.md", StringComparison.OrdinalIgnoreCase))
             xml += Environment.NewLine + "  <ItemGroup>" + Environment.NewLine + "    <None Include=\"README.md\" Pack=\"true\" PackagePath=\"\\\" />" + Environment.NewLine + "  </ItemGroup>" + Environment.NewLine;
         File.WriteAllText(project.ProjectPath, xml);
