@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace Vestigium.Nuget.Publish;
@@ -160,8 +161,12 @@ public partial class MainWindow : Window
         doc.Blocks.Clear();
         foreach (var line in (Vm.Log ?? "").Split(Environment.NewLine))
         {
-            var run = new Run(line) { Foreground = LineBrush(line) };
-            doc.Blocks.Add(new Paragraph(run) { Margin = new Thickness(0) });
+            var brush = LineBrush(line);
+            foreach (var shown in DisplayLines(line))
+            {
+                var run = new Run(shown) { Foreground = brush };
+                doc.Blocks.Add(new Paragraph(run) { Margin = new Thickness(shown.StartsWith("  ") ? 16 : 0, 0, 0, 0) });
+            }
         }
 
         SessionLog.ScrollToEnd();
@@ -171,10 +176,12 @@ public partial class MainWindow : Window
     {
         var ink = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary");
         var lower = line.Trim().ToLowerInvariant();
-        if (lower == "success")
-            return BrushOr("Vestigium.Brushes.Status.Success", System.Windows.Media.Brushes.LimeGreen);
-        if (lower is "failure" || lower.Contains("error") || lower.Contains("failed"))
-            return BrushOr("Vestigium.Brushes.Status.Error", System.Windows.Media.Brushes.IndianRed);
+        if (lower.Contains("success"))
+            return System.Windows.Media.Brushes.LimeGreen;
+        if (lower.Contains("error") || lower.Contains("failure") || lower.Contains("failed"))
+            return System.Windows.Media.Brushes.Red;
+        if (lower.Contains("warning"))
+            return System.Windows.Media.Brushes.Yellow;
         if (line.Contains(".exe", StringComparison.OrdinalIgnoreCase))
             return (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Accent.Primary");
         if (lower.StartsWith("push") || lower.Contains(" pushing "))
@@ -186,6 +193,40 @@ public partial class MainWindow : Window
 
     private System.Windows.Media.Brush BrushOr(string key, System.Windows.Media.Brush fallback)
         => TryFindResource(key) as System.Windows.Media.Brush ?? fallback;
+
+    private static IEnumerable<string> DisplayLines(string line)
+    {
+        var duplicate = Regex.Match(line, @"warning (NU\d+): File '([^']+)' is not added because the package already contains file '([^']+)'", RegexOptions.IgnoreCase);
+        if (duplicate.Success)
+        {
+            yield return $"warning {duplicate.Groups[1].Value}  {Path.GetFileName(duplicate.Groups[2].Value)}";
+            yield return $"  already in {duplicate.Groups[3].Value}";
+            yield break;
+        }
+
+        var framework = Regex.Match(line, @"warning (NU\d+):(?:.*)?(net[0-9][^\s\]]+)", RegexOptions.IgnoreCase);
+        if (line.Contains("NU5128", StringComparison.OrdinalIgnoreCase) && framework.Success)
+        {
+            yield return $"warning {framework.Groups[1].Value}  no lib folder for {framework.Groups[2].Value}";
+            yield break;
+        }
+
+        var created = Regex.Match(line, @"Successfully created package '([^']+)'", RegexOptions.IgnoreCase);
+        if (created.Success)
+        {
+            yield return "Successfully created " + Path.GetFileName(created.Groups[1].Value);
+            yield break;
+        }
+
+        var cut = line;
+        var sdk = cut.IndexOf("warning ", StringComparison.OrdinalIgnoreCase);
+        if (sdk > 0 && cut.Contains("NuGet.Build.Tasks", StringComparison.OrdinalIgnoreCase))
+            cut = cut[sdk..];
+        var tail = cut.LastIndexOf(" [", StringComparison.Ordinal);
+        if (tail > 0 && cut.EndsWith(".csproj]", StringComparison.OrdinalIgnoreCase))
+            cut = cut[..tail];
+        yield return cut.Trim();
+    }
 
     private void RepoList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
