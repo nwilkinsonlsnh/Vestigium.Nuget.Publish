@@ -64,6 +64,43 @@
           </Setter.Value>
         </Setter>
       </Style>
+      <Style x:Key="PackSubmenu" TargetType="MenuItem" BasedOn="{StaticResource PackMenuItem}">
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="MenuItem">
+              <Grid>
+                <Border x:Name="Row" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="28" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="20" />
+                    </Grid.ColumnDefinitions>
+                    <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="8,0,12,0"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                    <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"
+                               Foreground="{TemplateBinding Foreground}" />
+                  </Grid>
+                </Border>
+                <Popup IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Right"
+                       AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                  <Border Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                          BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" BorderThickness="1" Padding="0">
+                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                  </Border>
+                </Popup>
+              </Grid>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                  <Setter TargetName="Row" Property="Background" Value="{DynamicResource Vestigium.Brushes.Accent.Primary}" />
+                  <Setter Property="Foreground" Value="{DynamicResource Vestigium.Brushes.Surface.Window}" />
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
       <Style x:Key="PackSeparator" TargetType="Separator">
         <Setter Property="Template">
           <Setter.Value>
@@ -260,7 +297,7 @@
                 <MenuItem Header="Pack + Push" Style="{StaticResource PackMenuItem}" Command="{Binding PackAndPushCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Version" Style="{StaticResource PackMenuItem}">
+                <MenuItem Header="Version" Style="{StaticResource PackSubmenu}">
                   <MenuItem.Icon><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                   <MenuItem Header="Major" Style="{StaticResource PackMenuItem}" Command="{Binding BumpMajorCommand}" />
                   <MenuItem Header="Minor" Style="{StaticResource PackMenuItem}" Command="{Binding BumpMinorCommand}" />
