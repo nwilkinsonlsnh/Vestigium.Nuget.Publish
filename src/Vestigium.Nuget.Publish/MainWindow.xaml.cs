@@ -181,7 +181,7 @@ public partial class MainWindow : Window
             return System.Windows.Media.Brushes.LimeGreen;
         if (lower.Contains("error") || lower.Contains("failure") || lower.Contains("failed"))
             return System.Windows.Media.Brushes.Red;
-        if (lower.Contains("warning") || lower.StartsWith("warn"))
+        if (lower.Contains("warning") || lower.StartsWith("warn") || lower.Contains("api key expires"))
             return System.Windows.Media.Brushes.Yellow;
         if (lower.StartsWith("git ") || lower.StartsWith("git") && lower.Contains("fetch"))
             return System.Windows.Media.Brushes.DeepSkyBlue;
@@ -199,6 +199,16 @@ public partial class MainWindow : Window
 
     private static IEnumerable<string> DisplayLines(string line)
     {
+        if (line.Contains("API key expires", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return "warning  Your API key expires in 1 day.";
+            yield return "  Visit https://www.nuget.org/account/apikeys to regenerate your API key.";
+            yield break;
+        }
+
+        if (line.Contains("NU5128", StringComparison.OrdinalIgnoreCase) && line.Contains("Consult the list of actions below", StringComparison.OrdinalIgnoreCase))
+            yield break;
+
         var joined = line.IndexOf(",Readme missing", StringComparison.OrdinalIgnoreCase);
         if (joined > 0)
         {
