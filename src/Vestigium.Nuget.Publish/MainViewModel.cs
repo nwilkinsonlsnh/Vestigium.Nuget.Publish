@@ -912,7 +912,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (!xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase))
             xml = xml.Replace("</PropertyGroup>", "    <PackageReadmeFile>README.md</PackageReadmeFile>" + Environment.NewLine + "  </PropertyGroup>", 1);
         if (!xml.Contains("README.md", StringComparison.OrdinalIgnoreCase))
-            xml += Environment.NewLine + "  <ItemGroup>" + Environment.NewLine + "    <None Include="README.md" Pack="true" PackagePath="\" />" + Environment.NewLine + "  </ItemGroup>" + Environment.NewLine;
+            xml += Environment.NewLine + "  <ItemGroup>" + Environment.NewLine + "    <None Include=\"README.md\" Pack=\"true\" PackagePath=\"\\\" />" + Environment.NewLine + "  </ItemGroup>" + Environment.NewLine;
         File.WriteAllText(project.ProjectPath, xml);
         Append("readme stub README.md");
     }
