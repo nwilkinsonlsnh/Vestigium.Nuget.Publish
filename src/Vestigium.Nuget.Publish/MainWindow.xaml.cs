@@ -43,27 +43,67 @@ public partial class MainWindow : Window
 
     private string? AskName()
     {
-        var box = new TextBox { Margin = new Thickness(12), MinWidth = 240 };
         var window = new Window
         {
             Title = "Key name",
-            Width = 320,
-            Height = 140,
+            Width = 360,
+            Height = 168,
+            ResizeMode = ResizeMode.NoResize,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Owner = this,
-            Content = new DockPanel()
+            ShowInTaskbar = false,
+            Background = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Surface.Window")
         };
-        var save = new Button { Content = "Save", Margin = new Thickness(12), HorizontalAlignment = HorizontalAlignment.Right, IsDefault = true };
-        var panel = (DockPanel)window.Content;
-        DockPanel.SetDock(save, Dock.Bottom);
-        panel.Children.Add(save);
+        var box = new TextBox
+        {
+            Style = (Style)FindResource("TextBox.Standard"),
+            Margin = new Thickness(16, 8, 16, 0),
+            MinWidth = 280
+        };
+        var label = new TextBlock
+        {
+            Text = "Name this key",
+            Margin = new Thickness(16, 16, 16, 0),
+            Foreground = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary")
+        };
+        var save = new Button
+        {
+            Content = "Save",
+            Style = (Style)FindResource("Button.Primary"),
+            Margin = new Thickness(0, 0, 8, 0),
+            Padding = new Thickness(16, 4),
+            IsDefault = true
+        };
+        var cancel = new Button
+        {
+            Content = "Cancel",
+            Style = (Style)FindResource("Button.Secondary"),
+            Padding = new Thickness(16, 4),
+            IsCancel = true
+        };
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(16)
+        };
+        buttons.Children.Add(save);
+        buttons.Children.Add(cancel);
+        var panel = new DockPanel();
+        DockPanel.SetDock(buttons, Dock.Bottom);
+        panel.Children.Add(buttons);
+        panel.Children.Add(label);
         panel.Children.Add(box);
+        window.Content = panel;
         string? name = null;
         save.Click += (_, _) =>
         {
             name = box.Text.Trim();
+            if (name.Length == 0)
+                return;
             window.DialogResult = true;
         };
+        window.Loaded += (_, _) => box.Focus();
         return window.ShowDialog() == true ? name : null;
     }
 
