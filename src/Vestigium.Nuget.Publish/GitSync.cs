@@ -121,6 +121,41 @@ public static class GitSync
         return await RunAsync("git", "push", repoPath, log, token);
     }
 
+    private static async Task<int> PullSafelyAsync(string repoPath, Action<string> log, CancellationToken token)
+    {
+        var porcelain = (await ReadAsync("git", "status --porcelain", repoPath, token)).Trim();
+        var stashed = false;
+        if (porcelain.Length > 0)
+        {
+            log("local changes — stashing before pull");
+            log(porcelain);
+            var stash = await RunAsync("git", "stash push -u -m nuget-publish", repoPath, log, token);
+            if (stash != 0)
+                return stash;
+            stashed = true;
+        }
+
+        var pull = await RunAsync("git", "pull --ff-only", repoPath, log, token);
+        if (pull != 0)
+        {
+            if (stashed)
+                await RunAsync("git", "stash pop", repoPath, log, token);
+            return pull;
+        }
+
+        if (!stashed)
+            return 0;
+        var pop = await RunAsync("git", "stash pop", repoPath, log, token);
+        if (pop != 0)
+        {
+            log("local changes conflict with the pull — pack stopped");
+            return pop;
+        }
+
+        log("local changes restored");
+        return 0;
+    }
+
     private static async Task<int> RunAsync(string file, string args, string work, Action<string> log, CancellationToken token)
     {
         var start = new ProcessStartInfo
