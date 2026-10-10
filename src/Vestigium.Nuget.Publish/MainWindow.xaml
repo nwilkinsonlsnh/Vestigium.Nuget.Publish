@@ -149,10 +149,10 @@
                    Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    CaretBrush="{DynamicResource Vestigium.Brushes.Text.Primary}"
                    BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}" />
-      <Button Grid.Column="3" Style="{StaticResource Button.Standard}" Width="32" Height="28" Margin="0,0,8,0" ToolTip="Save key" Click="SaveKey_Click">
+      <Button Grid.Column="3" Style="{StaticResource Button.Secondary}" Width="32" Height="28" Margin="0,0,8,0" ToolTip="Save key" Click="SaveKey_Click">
         <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
       </Button>
-      <Button Grid.Column="4" Style="{StaticResource Button.Standard}" Width="32" Height="28" Margin="0,0,8,0" ToolTip="Delete key" Click="DeleteKey_Click">
+      <Button Grid.Column="4" Style="{StaticResource Button.Secondary}" Width="32" Height="28" Margin="0,0,8,0" ToolTip="Delete key" Click="DeleteKey_Click">
         <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
       </Button>
       <TextBox Grid.Column="5" Style="{StaticResource TextBox.Standard}"
