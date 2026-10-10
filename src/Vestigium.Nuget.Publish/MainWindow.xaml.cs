@@ -10,14 +10,21 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = new MainViewModel();
-        Closed += (_, _) =>
-        {
-            KeyBox.Clear();
-            Vm.ForgetKey();
-        };
+        Vm.KeyChanged += ApplyKey;
+        ApplyKey();
     }
 
+    private bool _applying;
+
     private MainViewModel Vm => (MainViewModel)DataContext;
+
+    private void ApplyKey()
+    {
+        _applying = true;
+        KeyBox.Password = Vm.ApiKey ?? "";
+        _applying = false;
+        Vm.NotifyKey();
+    }
 
     private void AddRoot_Click(object sender, RoutedEventArgs e)
     {
@@ -30,7 +37,9 @@ public partial class MainWindow : Window
 
     private void KeyBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
-        Vm.ApiKey = KeyBox.Password;
+        if (_applying)
+            return;
+        Vm.SaveKey(KeyBox.Password);
         Vm.NotifyKey();
     }
 
