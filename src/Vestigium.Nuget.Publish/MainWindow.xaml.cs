@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using Microsoft.Win32;
 
 namespace Vestigium.Nuget.Publish;
@@ -11,7 +12,13 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = new MainViewModel();
         Vm.KeyChanged += ApplyKey;
+        Vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(MainViewModel.Log))
+                RenderLog();
+        };
         ApplyKey();
+        RenderLog();
     }
 
     private bool _applying;
@@ -143,12 +150,22 @@ public partial class MainWindow : Window
         Vm.NotifyKey();
     }
 
-    private void SessionLog_TextChanged(object sender, TextChangedEventArgs e)
+    private void RenderLog()
     {
-        if (sender is not TextBox box)
-            return;
-        box.CaretIndex = box.Text.Length;
-        box.ScrollToEnd();
+        var doc = SessionLog.Document;
+        doc.Blocks.Clear();
+        var blue = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Accent.Primary");
+        var ink = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary");
+        foreach (var line in (Vm.Log ?? "").Split(Environment.NewLine))
+        {
+            var run = new Run(line)
+            {
+                Foreground = line.Contains(".exe", StringComparison.OrdinalIgnoreCase) ? blue : ink
+            };
+            doc.Blocks.Add(new Paragraph(run) { Margin = new Thickness(0) });
+        }
+
+        SessionLog.ScrollToEnd();
     }
 
     private void RepoList_SelectionChanged(object sender, SelectionChangedEventArgs e)

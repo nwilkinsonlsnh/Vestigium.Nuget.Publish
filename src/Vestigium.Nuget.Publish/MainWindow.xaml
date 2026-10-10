@@ -390,17 +390,15 @@
             <Button Content="Copy log" Style="{StaticResource Button.Secondary}" Command="{Binding CopyLogCommand}" Padding="12,4" Margin="0,0,8,0" />
             <Button Content="Clear log" Style="{StaticResource Button.Secondary}" Command="{Binding ClearLogCommand}" Padding="12,4" />
           </StackPanel>
-          <TextBox x:Name="SessionLog"
-                   HorizontalAlignment="Stretch"
-                   Style="{StaticResource TextBox.Standard}"
-                   Text="{Binding Log, Mode=OneWay}"
-                   IsReadOnly="True"
-                   FontFamily="Consolas"
-                   VerticalScrollBarVisibility="Auto"
-                   TextWrapping="Wrap"
-                   TextChanged="SessionLog_TextChanged"
-                   Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
-                   Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" />
+          <RichTextBox x:Name="SessionLog"
+                       HorizontalAlignment="Stretch"
+                       IsReadOnly="True"
+                       FontFamily="Consolas"
+                       VerticalScrollBarVisibility="Auto"
+                       Background="{DynamicResource Vestigium.Brushes.Surface.Card}"
+                       Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}"
+                       BorderBrush="{DynamicResource Vestigium.Brushes.Stroke.Subtle}"
+                       BorderThickness="1" />
         </DockPanel>
         <DockPanel Visibility="{Binding ShowSettings, Converter={StaticResource BoolToVis}}">
           <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,12" Foreground="{DynamicResource Vestigium.Brushes.Text.Secondary}"
