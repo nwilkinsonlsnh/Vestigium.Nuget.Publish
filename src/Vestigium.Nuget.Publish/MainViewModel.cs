@@ -818,6 +818,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (pack)
             {
+                EnsureReadme(project);
                 var dependencies = Dependencies(project);
                 string? extraSource = dependencies.Count == 0
                     ? null
@@ -876,6 +877,7 @@ public sealed partial class MainViewModel : ObservableObject
                 }
 
                 MarkPushed(project);
+                Append($"Successfully pushed {project.PackageId} {project.LocalVersion}");
             }
 
             Status = "Done";
@@ -896,6 +898,23 @@ public sealed partial class MainViewModel : ObservableObject
             Busy = false;
             LoadProjects();
         }
+    }
+
+    private void EnsureReadme(PackableProject project)
+    {
+        var dir = Path.GetDirectoryName(project.ProjectPath)!;
+        var names = new[] { "README.md", "Readme.md", "readme.md", "README.txt", "Readme.txt" };
+        if (names.Any(name => File.Exists(Path.Combine(dir, name))))
+            return;
+        var stub = Path.Combine(dir, "README.md");
+        File.WriteAllText(stub, "# " + project.PackageId + Environment.NewLine);
+        var xml = File.ReadAllText(project.ProjectPath);
+        if (!xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase))
+            xml = xml.Replace("</PropertyGroup>", "    <PackageReadmeFile>README.md</PackageReadmeFile>" + Environment.NewLine + "  </PropertyGroup>", 1);
+        if (!xml.Contains("README.md", StringComparison.OrdinalIgnoreCase))
+            xml += Environment.NewLine + "  <ItemGroup>" + Environment.NewLine + "    <None Include="README.md" Pack="true" PackagePath="\" />" + Environment.NewLine + "  </ItemGroup>" + Environment.NewLine;
+        File.WriteAllText(project.ProjectPath, xml);
+        Append("readme stub README.md");
     }
 
     private void Persist()

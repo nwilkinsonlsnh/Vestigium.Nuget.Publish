@@ -177,12 +177,14 @@ public partial class MainWindow : Window
     {
         var ink = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary");
         var lower = line.Trim().ToLowerInvariant();
-        if (lower.Contains("success"))
+        if (lower.Contains("success") || lower.Contains("was pushed"))
             return System.Windows.Media.Brushes.LimeGreen;
         if (lower.Contains("error") || lower.Contains("failure") || lower.Contains("failed"))
             return System.Windows.Media.Brushes.Red;
-        if (lower.Contains("warning"))
+        if (lower.Contains("warning") || lower.StartsWith("warn"))
             return System.Windows.Media.Brushes.Yellow;
+        if (lower.StartsWith("git ") || lower.StartsWith("git") && lower.Contains("fetch"))
+            return System.Windows.Media.Brushes.DeepSkyBlue;
         if (line.Contains(".exe", StringComparison.OrdinalIgnoreCase))
             return (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Accent.Primary");
         if (lower.StartsWith("push") || lower.Contains(" pushing "))
@@ -197,6 +199,16 @@ public partial class MainWindow : Window
 
     private static IEnumerable<string> DisplayLines(string line)
     {
+        var joined = line.IndexOf(",Readme missing", StringComparison.OrdinalIgnoreCase);
+        if (joined > 0)
+        {
+            foreach (var part in DisplayLines(line[..joined].Trim().TrimEnd(',')))
+                yield return part;
+            foreach (var part in DisplayLines("warning " + line[(joined + 1)..].Trim()))
+                yield return part;
+            yield break;
+        }
+
         var duplicate = Regex.Match(line, @"warning (NU\d+): File '([^']+)' is not added because the package already contains file '([^']+)'", RegexOptions.IgnoreCase);
         if (duplicate.Success)
         {
