@@ -296,6 +296,10 @@
                     HeadersVisibility="Column">
             <DataGrid.ContextMenu>
               <ContextMenu Style="{StaticResource PackMenu}" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="Pack" Style="{StaticResource PackMenuItem}" Command="{Binding PackCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE7B8;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
