@@ -47,7 +47,7 @@ public partial class MainWindow : Window
         {
             Title = "Key name",
             Width = 480,
-            Height = 180,
+            Height = 196,
             ResizeMode = ResizeMode.NoResize,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Owner = this,
@@ -58,8 +58,19 @@ public partial class MainWindow : Window
         {
             Style = (Style)FindResource("TextBox.Standard"),
             Margin = new Thickness(16, 8, 16, 0),
-            MinWidth = 420
+            MaxLength = 35,
+            AcceptsReturn = false,
+            TextWrapping = TextWrapping.NoWrap,
+            HorizontalAlignment = HorizontalAlignment.Stretch
         };
+        var count = new TextBlock
+        {
+            Text = "0 of 35",
+            Margin = new Thickness(16, 4, 16, 0),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Foreground = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Secondary")
+        };
+        box.TextChanged += (_, _) => count.Text = box.Text.Length + " of 35";
         var label = new TextBlock
         {
             Text = "Name this key",
@@ -89,11 +100,19 @@ public partial class MainWindow : Window
         };
         buttons.Children.Add(save);
         buttons.Children.Add(cancel);
-        var panel = new DockPanel();
-        DockPanel.SetDock(buttons, Dock.Bottom);
-        panel.Children.Add(buttons);
+        var panel = new Grid();
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(label, 0);
+        Grid.SetRow(box, 1);
+        Grid.SetRow(count, 2);
+        Grid.SetRow(buttons, 3);
         panel.Children.Add(label);
         panel.Children.Add(box);
+        panel.Children.Add(count);
+        panel.Children.Add(buttons);
         window.Content = panel;
         string? name = null;
         save.Click += (_, _) =>
