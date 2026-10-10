@@ -84,6 +84,24 @@ public static class GitSync
         return 0;
     }
 
+    public static async Task<int> RestoreAsync(
+        string repoPath,
+        IReadOnlyList<string> filePaths,
+        Action<string> log,
+        CancellationToken token)
+    {
+        foreach (var filePath in filePaths.Where(File.Exists))
+        {
+            var relative = Path.GetRelativePath(repoPath, filePath);
+            var restored = await RunAsync("git", $"checkout -- "{relative}"", repoPath, log, token);
+            if (restored != 0)
+                return restored;
+            log($"restored {relative}");
+        }
+
+        return 0;
+    }
+
     public static async Task<int> CommitAndPushAsync(
         string repoPath,
         IReadOnlyList<string> filePaths,
