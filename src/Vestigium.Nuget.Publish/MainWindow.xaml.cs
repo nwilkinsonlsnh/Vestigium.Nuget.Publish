@@ -14,8 +14,12 @@ public partial class MainWindow : Window
         Vm.KeyChanged += ApplyKey;
         Vm.PropertyChanged += (_, args) =>
         {
-            if (args.PropertyName == nameof(MainViewModel.Log))
+            if (args.PropertyName != nameof(MainViewModel.Log))
+                return;
+            if (Dispatcher.CheckAccess())
                 RenderLog();
+            else
+                Dispatcher.BeginInvoke(RenderLog);
         };
         ApplyKey();
         RenderLog();
