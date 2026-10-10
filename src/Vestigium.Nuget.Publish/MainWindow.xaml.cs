@@ -11,6 +11,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = new MainViewModel();
         Vm.KeyChanged += ApplyKey;
+        Vm.InventoryReady += ShowInventoryWindow;
         ApplyKey();
     }
 
@@ -124,6 +125,64 @@ public partial class MainWindow : Window
         };
         window.Loaded += (_, _) => box.Focus();
         return window.ShowDialog() == true ? name : null;
+    }
+
+    private void ShowInventoryWindow(string package, IReadOnlyList<string> names)
+    {
+        var list = new ListBox
+        {
+            Margin = new Thickness(16, 8, 16, 0),
+            BorderThickness = new Thickness(0),
+            Background = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Surface.Window"),
+            Foreground = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary")
+        };
+        foreach (var name in names)
+        {
+            var row = new TextBlock
+            {
+                Text = name,
+                Margin = new Thickness(4, 2, 4, 2),
+                FontWeight = name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = (System.Windows.Media.Brush)FindResource(name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                    ? "Vestigium.Brushes.Accent.Primary"
+                    : "Vestigium.Brushes.Text.Primary")
+            };
+            list.Items.Add(row);
+        }
+
+        var title = new TextBlock
+        {
+            Text = package,
+            Margin = new Thickness(16, 16, 16, 0),
+            Foreground = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Text.Primary")
+        };
+        var close = new Button
+        {
+            Content = "Close",
+            Style = (Style)FindResource("Button.Secondary"),
+            Padding = new Thickness(16, 4, 16, 4),
+            Margin = new Thickness(16),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            IsCancel = true
+        };
+        var panel = new DockPanel();
+        DockPanel.SetDock(title, Dock.Top);
+        DockPanel.SetDock(close, Dock.Bottom);
+        panel.Children.Add(title);
+        panel.Children.Add(close);
+        panel.Children.Add(list);
+        var dialog = new Window
+        {
+            Title = "Inventory",
+            Width = 720,
+            Height = 480,
+            Owner = this,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Background = (System.Windows.Media.Brush)FindResource("Vestigium.Brushes.Surface.Window"),
+            Content = panel
+        };
+        close.Click += (_, _) => dialog.Close();
+        dialog.ShowDialog();
     }
 
     private void AddRoot_Click(object sender, RoutedEventArgs e)
