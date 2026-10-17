@@ -7,16 +7,16 @@ namespace Vestigium.Nuget.Publish;
 public static class PackageLayout
 {
     private static readonly Regex PackedNone = new(
-        @"<None\s+Include=\"([^\"]+)\"[^>]*Pack=\"true\"[^>]*PackagePath=\"([^\"]*)\"",
+        """<None\s+Include="([^"]+)"[^>]*Pack="true"[^>]*PackagePath="([^"]*)""",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex PackedNoneAlt = new(
-        @"<None\s+Include=\"([^\"]+)\"[^>]*PackagePath=\"([^\"]*)\"[^>]*Pack=\"true\"",
+        """<None\s+Include="([^"]+)"[^>]*PackagePath="([^"]*)"[^>]*Pack="true""",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public static bool Prepare(PackableProject project, Action<string> log)
     {
-        var props = ReadProps(project.ProjectPath);
+        var props = ReadProps(project.ProjectPath).ToArray();
         if (props.Any(row => PacksReadme(row.Text)))
             StripProjectReadme(project, log);
 
@@ -44,7 +44,7 @@ public static class PackageLayout
 
         using var zip = ZipFile.OpenRead(nupkg);
         var groups = zip.Entries
-            .GroupBy(entry => entry.FullName.Replace('\\', '/'), StringComparer.OrdinalIgnoreCase)
+            .GroupBy(entry => entry.FullName.Replace('\', '/'), StringComparer.OrdinalIgnoreCase)
             .Where(group => group.Count() > 1 && !group.Key.EndsWith('/'))
             .ToArray();
         if (groups.Length == 0)
@@ -68,8 +68,8 @@ public static class PackageLayout
 
         var xml = File.ReadAllText(project.ProjectPath);
         var next = xml;
-        next = Regex.Replace(next, @"\s*<PackageReadmeFile>\s*README\.md\s*</PackageReadmeFile>", "", RegexOptions.IgnoreCase);
-        next = Regex.Replace(next, @"\s*<None\s+Include=\"README\.md\"[^>]*Pack=\"true\"[^>]*/>", "", RegexOptions.IgnoreCase);
+        next = Regex.Replace(next, """\s*<PackageReadmeFile>\s*README\.md\s*</PackageReadmeFile>""", "", RegexOptions.IgnoreCase);
+        next = Regex.Replace(next, """\s*<None\s+Include="README\.md"[^>]*Pack="true"[^>]*/>""", "", RegexOptions.IgnoreCase);
         if (next == xml)
             return;
         File.WriteAllText(project.ProjectPath, next);
@@ -102,13 +102,13 @@ public static class PackageLayout
             yield return (path, $"{name}:{include}");
         }
 
-        if (Regex.IsMatch(xml, @"<PackageReadmeFile>\s*README\.md\s*</PackageReadmeFile>", RegexOptions.IgnoreCase))
+        if (Regex.IsMatch(xml, """<PackageReadmeFile>\s*README\.md\s*</PackageReadmeFile>""", RegexOptions.IgnoreCase))
             yield return ("README.md", name + ":PackageReadmeFile");
     }
 
     private static bool PacksReadme(string xml) =>
-        Regex.IsMatch(xml, @"<PackageReadmeFile>\s*README\.md\s*</PackageReadmeFile>", RegexOptions.IgnoreCase)
-        || Regex.IsMatch(xml, @"Include=\"[^\"]*README\.md\"[^>]*Pack=\"true\"", RegexOptions.IgnoreCase);
+        Regex.IsMatch(xml, """<PackageReadmeFile>\s*README\.md\s*</PackageReadmeFile>""", RegexOptions.IgnoreCase)
+        || Regex.IsMatch(xml, """Include="[^"]*README\.md"[^>]*Pack="true"""", RegexOptions.IgnoreCase);
 
     private static bool IsStub(string text) =>
         text.Contains("Packaged by Vestigium.Nuget.Publish", StringComparison.Ordinal);
@@ -126,7 +126,7 @@ public static class PackageLayout
     }
 
     private static string Normalize(string path) =>
-        path.Replace('\\', '/').TrimStart('/').Trim();
+        path.Replace('\', '/').TrimStart('/').Trim();
 
     private static string? Find(string output, PackableProject project)
     {
