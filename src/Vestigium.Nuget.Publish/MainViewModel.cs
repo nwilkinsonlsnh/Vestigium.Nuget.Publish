@@ -809,6 +809,11 @@ public sealed partial class MainViewModel : ObservableObject
             if (pack)
             {
                 EnsureReadme(project);
+                if (!PackageLayout.Prepare(project, Append))
+                {
+                    Status = "Duplicate package files";
+                    return;
+                }
                 var dependencies = Dependencies(project);
                 string? extraSource = dependencies.Count == 0
                     ? null
@@ -816,6 +821,11 @@ public sealed partial class MainViewModel : ObservableObject
                 foreach (var dependency in dependencies)
                 {
                     Append($"packing {dependency.PackageId} {dependency.ProjectVersion} before {project.PackageId}");
+                    if (!PackageLayout.Prepare(dependency, Append))
+                    {
+                        Status = $"Duplicate package files  {dependency.PackageId}";
+                        return;
+                    }
                     var dependencyPacked = await DotnetCli.PackAsync(dependency, OutputFolder, Append, token, extraSource);
                     if (dependencyPacked != 0)
                     {
@@ -849,6 +859,12 @@ public sealed partial class MainViewModel : ObservableObject
                         await GitSync.RestoreAsync(project.RepoPath, bumpedFiles, Append, token);
                     Status = "Pack failed. Version was not committed.";
                     Append("pack failed. The version bump was put back.");
+                    return;
+                }
+
+                if (!PackageLayout.Inspect(project, OutputFolder, Append))
+                {
+                    Status = "Duplicate files in package";
                     return;
                 }
 
@@ -910,6 +926,18 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void EnsureReadme(PackableProject project)
     {
+        var props = Path.Combine(project.RepoPath, "Directory.Build.props");
+        if (File.Exists(props))
+        {
+            var inherited = File.ReadAllText(props);
+            if (inherited.Contains("<PackageReadmeFile>", StringComparison.OrdinalIgnoreCase)
+                && inherited.Contains("README.md", StringComparison.OrdinalIgnoreCase))
+            {
+                Append("readme already supplied by Directory.Build.props");
+                return;
+            }
+        }
+
         var dir = Path.GetDirectoryName(project.ProjectPath)!;
         if (File.Exists(Path.Combine(dir, "README.md")))
             return;
