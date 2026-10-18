@@ -295,7 +295,7 @@
                     SelectionMode="Single"
                     HeadersVisibility="Column">
             <DataGrid.ContextMenu>
-              <ContextMenu Style="{StaticResource PackMenu}" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+              <ContextMenu Style="{StaticResource PackMenu}" Opened="PackMenu_Opened" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                 <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
@@ -314,6 +314,10 @@
                   <MenuItem Header="Major" Style="{StaticResource PackMenuItem}" IsCheckable="True" IsChecked="{Binding IsBumpMajor, Mode=OneWay}" Command="{Binding BumpMajorCommand}" />
                   <MenuItem Header="Minor" Style="{StaticResource PackMenuItem}" IsCheckable="True" IsChecked="{Binding IsBumpMinor, Mode=OneWay}" Command="{Binding BumpMinorCommand}" />
                   <MenuItem Header="Patch" Style="{StaticResource PackMenuItem}" IsCheckable="True" IsChecked="{Binding IsBumpPatch, Mode=OneWay}" Command="{Binding BumpPatchCommand}" />
+                </MenuItem>
+                <Separator Style="{StaticResource PackSeparator}" />
+                <MenuItem Header="Monitor Package" Style="{StaticResource PackMenuItem}" Command="{Binding MonitorPackageCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE7C3;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="View session log" Style="{StaticResource PackMenuItem}" Command="{Binding ViewLogCommand}">
