@@ -12,6 +12,7 @@ public static class PackageLayout
         if (props.Any(row => PacksReadme(row.Text)))
             StripProjectReadme(project, log);
 
+        ResolveStubCollision(project, log);
         var collisions = Collisions(project);
         if (collisions.Count == 0)
             return true;
@@ -115,9 +116,23 @@ public static class PackageLayout
             yield return (path, name + ":" + include);
         }
 
-        if (xml.Contains("<PackageReadmeFile>", StringComparison.OrdinalIgnoreCase)
-            && xml.Contains("README.md", StringComparison.OrdinalIgnoreCase))
-            yield return ("README.md", name + ":PackageReadmeFile");
+    }
+
+    private static void ResolveStubCollision(PackableProject project, Action<string> log)
+    {
+        var dir = Path.GetDirectoryName(project.ProjectPath)!;
+        var stub = Path.Combine(dir, "README.md");
+        if (!File.Exists(stub) || !IsStub(File.ReadAllText(stub)))
+            return;
+        var xml = File.ReadAllText(project.ProjectPath);
+        if (!xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase)
+            && !xml.Contains("PackagePath=\"README.md\"", StringComparison.OrdinalIgnoreCase))
+            return;
+        File.Delete(stub);
+        var next = Regex.Replace(xml, "\\s*<None Include=\"README.md\" Pack=\"true\"[^/]*/>\\s*", "", RegexOptions.IgnoreCase);
+        if (next != xml)
+            File.WriteAllText(project.ProjectPath, next);
+        log("removed colliding readme stub " + stub);
     }
 
     private static string? Between(string text, string start, string end)
