@@ -115,7 +115,6 @@ public static class PackageLayout
                 path = Path.GetFileName(include.Replace('/', Path.DirectorySeparatorChar));
             yield return (path, name + ":" + include);
         }
-
     }
 
     private static void ResolveStubCollision(PackableProject project, Action<string> log)
