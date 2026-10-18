@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -10,7 +11,9 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly PublishSettings _settings;
     private readonly Dictionary<string, string> _pushed = new(StringComparer.OrdinalIgnoreCase);
+    private readonly DispatcherTimer _listing = new() { Interval = TimeSpan.FromMinutes(5) };
     private CancellationTokenSource? _cts;
+    private int _listingBusy;
 
     public MainViewModel()
     {
@@ -29,6 +32,7 @@ public sealed partial class MainViewModel : ObservableObject
         ApiKey = PublishStore.LoadApiKey(_settings, SelectedKeyName);
         if (Roots.Count > 0)
             _ = RefreshReposAsync();
+        _listing.Tick += (_, _) => _ = CheckListingsAsync();
     }
 
     public ObservableCollection<string> Roots { get; }
@@ -904,6 +908,7 @@ public sealed partial class MainViewModel : ObservableObject
 
                 MarkPushed(project);
                 Append($"Successfully pushed {project.PackageId} {project.LocalVersion}");
+                StartListingWatch();
             }
 
             Status = "Done";
@@ -985,5 +990,101 @@ public sealed partial class MainViewModel : ObservableObject
     private void Append(string line)
     {
         Log = string.IsNullOrWhiteSpace(Log) ? line : $"{Log}{Environment.NewLine}{line}";
+    }
+
+    private void StartListingWatch()
+    {
+        if (!_listing.IsEnabled)
+            _listing.Start();
+        Append("listing watch armed  every 5 minutes until the local packs are listed or cleared");
+        _ = CheckListingsAsync();
+    }
+
+    private async Task CheckListingsAsync()
+    {
+        if (Interlocked.Exchange(ref _listingBusy, 1) == 1)
+            return;
+        try
+        {
+            var packs = LocalPacks().ToArray();
+            if (packs.Length == 0)
+            {
+                Append("listing watch  no local packs  stopped");
+                _listing.Stop();
+                return;
+            }
+
+            var waiting = 0;
+            foreach (var pack in packs)
+            {
+                bool listed;
+                try
+                {
+                    listed = await NugetCatalog.HasVersionAsync(pack.Id, pack.Version, Source, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    Append($"listing {pack.Id} {pack.Version}  lookup failed  {ex.Message}");
+                    waiting++;
+                    continue;
+                }
+
+                if (listed)
+                    Append($"listed {pack.Id} {pack.Version}");
+                else
+                {
+                    waiting++;
+                    Append($"waiting {pack.Id} {pack.Version}");
+                }
+            }
+
+            if (waiting == 0)
+            {
+                Append("listing watch  all local packs are listed  stopped");
+                _listing.Stop();
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _listingBusy, 0);
+        }
+    }
+
+    private IEnumerable<(string Id, string Version)> LocalPacks()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var repo in Repos.Select(row => row.Path).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var output = Path.IsPathRooted(OutputFolder) ? OutputFolder : Path.Combine(repo, OutputFolder);
+            if (!Directory.Exists(output))
+                continue;
+            foreach (var file in Directory.EnumerateFiles(output, "*.nupkg"))
+            {
+                if (!TryPack(Path.GetFileNameWithoutExtension(file), out var id, out var version))
+                    continue;
+                if (seen.Add(id + "@" + version))
+                    yield return (id, version);
+            }
+        }
+    }
+
+    private static bool TryPack(string name, out string id, out string version)
+    {
+        id = "";
+        version = "";
+        var parts = name.Split('.');
+        if (parts.Length < 4)
+            return false;
+        for (var i = parts.Length - 3; i >= 1; i--)
+        {
+            var candidate = string.Join('.', parts[i..]);
+            if (!System.Version.TryParse(candidate, out _))
+                continue;
+            id = string.Join('.', parts[..i]);
+            version = candidate;
+            return id.Length > 0;
+        }
+
+        return false;
     }
 }
