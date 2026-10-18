@@ -146,13 +146,17 @@ public static class DotnetCli
         if (!Directory.Exists(output))
             return null;
 
-        var exact = Path.Combine(output, $"{project.PackageId}.{project.LocalVersion}.nupkg");
-        if (File.Exists(exact))
-            return exact;
+        // The tool decides the version. Push that package, never an older one left in the folder.
+        foreach (var version in new[] { project.ProjectVersion, project.LocalVersion })
+        {
+            if (string.IsNullOrWhiteSpace(version) || version == "—")
+                continue;
+            var exact = Path.Combine(output, $"{project.PackageId}.{version}.nupkg");
+            if (File.Exists(exact))
+                return exact;
+        }
 
-        return Directory.EnumerateFiles(output, $"{project.PackageId}.*.nupkg")
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .FirstOrDefault();
+        return null;
     }
 
     private static async Task<int> RunAsync(string file, string args, string work, Action<string> log, CancellationToken token)
