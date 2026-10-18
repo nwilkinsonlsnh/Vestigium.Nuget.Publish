@@ -794,6 +794,7 @@ public sealed partial class MainViewModel : ObservableObject
 
                     Append($"{project.PackageId} nuget {previous} → {next}");
                     project.ProjectVersion = next;
+                    project.LocalVersion = next;
                     SelectedProject = project;
                     bumpedFiles = string.IsNullOrWhiteSpace(project.NuspecPath)
                         ? new[] { project.ProjectPath }
@@ -853,6 +854,7 @@ public sealed partial class MainViewModel : ObservableObject
                 }
 
                 var packed = await DotnetCli.PackAsync(project, OutputFolder, Append, token, extraSource);
+                project.LocalVersion = project.ProjectVersion;
                 if (packed != 0)
                 {
                     if (bumpedFiles is not null)
