@@ -992,6 +992,16 @@ public sealed partial class MainViewModel : ObservableObject
         Log = string.IsNullOrWhiteSpace(Log) ? line : $"{Log}{Environment.NewLine}{line}";
     }
 
+    [ObservableProperty]
+    private bool _hasLocalPacks;
+
+    partial void OnHasLocalPacksChanged(bool value) => MonitorPackageCommand.NotifyCanExecuteChanged();
+
+    [RelayCommand(CanExecute = nameof(HasLocalPacks))]
+    private void MonitorPackage() => StartListingWatch();
+
+    public void RefreshLocalPacks() => HasLocalPacks = LocalPacks().Any();
+
     private void StartListingWatch()
     {
         if (!_listing.IsEnabled)
