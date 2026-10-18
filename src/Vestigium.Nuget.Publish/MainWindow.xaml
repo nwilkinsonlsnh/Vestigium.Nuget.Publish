@@ -299,6 +299,9 @@
                 <MenuItem Header="Clean packs" Style="{StaticResource PackMenuItem}" Command="{Binding CleanPacksCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="Clear log" Style="{StaticResource PackMenuItem}" Command="{Binding ClearLogCommand}">
+                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
+                </MenuItem>
                 <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="Pack" Style="{StaticResource PackMenuItem}" Command="{Binding PackCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE7B8;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
@@ -328,9 +331,6 @@
                 </MenuItem>
                 <MenuItem Header="Show inventory" Style="{StaticResource PackMenuItem}" Command="{Binding ShowInventoryCommand}">
                   <MenuItem.Icon><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="Clear log" Style="{StaticResource PackMenuItem}" Command="{Binding ClearLogCommand}">
-                  <MenuItem.Icon><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Vestigium.Brushes.Text.Primary}" /></MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource PackSeparator}" />
                 <MenuItem Header="Make packable" Style="{StaticResource PackMenuItem}" Command="{Binding MakePackableCommand}" Visibility="{Binding SelectedProject.IsPackable, Converter={StaticResource InverseBoolToVis}}">
