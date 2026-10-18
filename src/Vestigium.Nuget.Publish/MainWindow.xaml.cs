@@ -31,6 +31,8 @@ public partial class MainWindow : Window
 
     private MainViewModel Vm => (MainViewModel)DataContext;
 
+    private void PackMenu_Opened(object sender, RoutedEventArgs e) => Vm.RefreshLocalPacks();
+
     private void ApplyKey()
     {
         _applying = true;
