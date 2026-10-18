@@ -948,7 +948,7 @@ public sealed partial class MainViewModel : ObservableObject
         var dir = Path.GetDirectoryName(project.ProjectPath)!;
         var xml = File.ReadAllText(project.ProjectPath);
         if (xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase)
-            || xml.Contains("PackagePath=\"README.md\"", StringComparison.OrdinalIgnoreCase)
+            || xml.Contains("PackagePath=\"README.md\"", StringComparison.OrdinalIgnoreCase))
         {
             Append("readme already supplied by " + project.PackageId);
             return;
