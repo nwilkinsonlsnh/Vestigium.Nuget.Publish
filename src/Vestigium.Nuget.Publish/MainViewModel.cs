@@ -946,10 +946,17 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var dir = Path.GetDirectoryName(project.ProjectPath)!;
+        var xml = File.ReadAllText(project.ProjectPath);
+        if (xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase)
+            || xml.Contains("PackagePath=\"README.md\"", StringComparison.OrdinalIgnoreCase)
+            || xml.Contains("PackagePath=\"\\"", StringComparison.OrdinalIgnoreCase))
+        {
+            Append("readme already supplied by " + project.PackageId);
+            return;
+        }
         if (File.Exists(Path.Combine(dir, "README.md")))
             return;
         File.WriteAllText(Path.Combine(dir, "README.md"), "# " + project.PackageId + Environment.NewLine + Environment.NewLine + "Packaged by Vestigium.Nuget.Publish." + Environment.NewLine);
-        var xml = File.ReadAllText(project.ProjectPath);
         if (!xml.Contains("PackageReadmeFile", StringComparison.OrdinalIgnoreCase))
         {
             var close = xml.IndexOf("</PropertyGroup>", StringComparison.Ordinal);
