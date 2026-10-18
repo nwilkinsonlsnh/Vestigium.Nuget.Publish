@@ -48,6 +48,32 @@ public static class NugetCatalog
         return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
+    public static async Task<bool> HasVersionAsync(string packageId, string version, string source, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(packageId) || string.IsNullOrWhiteSpace(version))
+            return false;
+        var id = packageId.Trim().ToLowerInvariant();
+        var wanted = Normalize(version);
+        var url = source.Contains("nuget.org", StringComparison.OrdinalIgnoreCase)
+            ? $"https://api.nuget.org/v3-flatcontainer/{id}/index.json"
+            : $"{source.TrimEnd('/')}/{id}/index.json";
+        using var response = await Http.GetAsync(url, token);
+        if (!response.IsSuccessStatusCode)
+            return false;
+        await using var stream = await response.Content.ReadAsStreamAsync(token);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: token);
+        if (!doc.RootElement.TryGetProperty("versions", out var versions) || versions.ValueKind != JsonValueKind.Array)
+            return false;
+        foreach (var item in versions.EnumerateArray())
+        {
+            var raw = item.GetString();
+            if (!string.IsNullOrWhiteSpace(raw) && Normalize(raw).Equals(wanted, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
     public static async Task<string> ListedAsync(string packageId, string source, CancellationToken token)
     {
         if (string.IsNullOrWhiteSpace(packageId))
